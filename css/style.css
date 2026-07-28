@@ -1,0 +1,294 @@
+/* ==========================================
+   八百万の神々 神さま台帳＆FamilyTree スタイル
+   ========================================== */
+
+/* 全体基本設定 */
+:root {
+  --bg-color: #f4f0ea;           /* 和紙風の薄い生成り色 */
+  --header-bg: #1f1e2e;          /* 漆黒・紺色 */
+  --text-main: #2b2b2b;
+  
+  /* 系統別メインカラー */
+  --color-amatsu: #2e5b40;       /* 天津神：竹・松の緑 */
+  --bg-amatsu: #eef5f0;
+  --color-kunitsu: #8c2d19;      /* 国津神：朱・エンジ色 */
+  --bg-kunitsu: #fcf0ed;
+  --color-other: #3a3858;        /* その他：紫紺 */
+  --bg-other: #f1f0f7;
+  
+  --border-radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "游明朝", serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 全体スクロールを防止しアプリ風に */
+}
+
+/* ------------------------------------------
+   ヘッダー
+   ------------------------------------------ */
+.app-header {
+  background-color: var(--header-bg);
+  color: #fff;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.app-header h1 {
+  font-size: 1.2rem;
+  font-weight: normal;
+  letter-spacing: 1px;
+}
+
+.search-container input {
+  width: 280px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  font-size: 0.9rem;
+  outline: none;
+  background-color: #ffffff;
+}
+
+/* ------------------------------------------
+   メイン 2カラムレイアウト（iPad最適化）
+   ------------------------------------------ */
+.app-container {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* 左カラム：リストエリア */
+.list-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--border-radius);
+  padding: 12px;
+  border: 1px solid #e0d8cd;
+}
+
+/* 右カラム：詳細・Treeエリア */
+.detail-section {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: var(--border-radius);
+  padding: 16px;
+  border: 1px solid #e0d8cd;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* ------------------------------------------
+   タブボタン（検索フィルター＆ビュー切替）
+   ------------------------------------------ */
+.filter-tabs, .view-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab-btn, .view-tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.tab-btn.active, .view-tab-btn.active {
+  background: var(--header-bg);
+  color: #fff;
+  border-color: var(--header-bg);
+  font-weight: bold;
+}
+
+/* ------------------------------------------
+   神様リスト＆カードデザイン（ID完全非表示）
+   ------------------------------------------ */
+.god-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.god-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border-left: 6px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.god-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+/* 選択されたカード */
+.god-card.selected {
+  outline: 2px solid var(--header-bg);
+}
+
+/* 系統別色分け（カード全体の背景とワンポイント線） */
+.god-card.amatsu {
+  border-left-color: var(--color-amatsu);
+  background-color: var(--bg-amatsu);
+}
+
+.god-card.kunitsu {
+  border-left-color: var(--color-kunitsu);
+  background-color: var(--bg-kunitsu);
+}
+
+.god-card.other {
+  border-left-color: var(--color-other);
+  background-color: var(--bg-other);
+}
+
+.god-card .god-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.god-card .god-yomi {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.god-card .god-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.god-card.amatsu .god-badge { background-color: var(--color-amatsu); }
+.god-card.kunitsu .god-badge { background-color: var(--color-kunitsu); }
+.god-card.other .god-badge { background-color: var(--color-other); }
+
+/* ------------------------------------------
+   右側ビューパネル（詳細 ＆ FamilyTree）
+   ------------------------------------------ */
+.view-panel {
+  display: none;
+  flex: 1;
+  height: 100%;
+}
+
+.view-panel.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 詳細表示コンテンツ */
+.detail-content h2 {
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 6px;
+}
+
+.detail-content .yomi-title {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.detail-content .description-box {
+  background: #fdfcf7;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e8e2d5;
+  margin: 16px 0;
+  line-height: 1.6;
+}
+
+/* 家族関係ボタンリスト */
+.family-relations {
+  margin-top: 16px;
+}
+
+.family-relations h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: #444;
+}
+
+.relation-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.rel-btn {
+  padding: 6px 12px;
+  border: 1px solid #bbb;
+  border-radius: 20px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.rel-btn:hover {
+  background: #f0f0f0;
+}
+
+/* FamilyTree 描画コンテナ */
+.tree-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  background: #fcfbfa;
+}
+
+.placeholder-text {
+  color: #888;
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* ------------------------------------------
+   フッター
+   ------------------------------------------ */
+.app-footer {
+  background-color: #2b2a38;
+  color: #aaa;
+  padding: 6px 24px;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+}

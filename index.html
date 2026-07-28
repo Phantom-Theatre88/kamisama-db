@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>八百万の神々・神さま台帳＆FamilyTree</title>
+  <!-- デザイン用CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  <!-- FamilyTree描画用ライブラリ（Vis.js） -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+
+  <!-- ヘッダーエリア -->
+  <header class="app-header">
+    <h1>⛩️ 八百万の神々 神さま台帳</h1>
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="🔍 神名・読み・キーワードで検索...">
+    </div>
+  </header>
+
+  <!-- メインコンテンツ（2カラム構成） -->
+  <main class="app-container">
+
+    <!-- 左カラム：神様リストエリア -->
+    <section class="list-section">
+      <!-- 系統絞り込みタブ -->
+      <div class="filter-tabs">
+        <button class="tab-btn active" data-system="all">すべて</button>
+        <button class="tab-btn amatsu" data-system="天津神">☀️ 天津神</button>
+        <button class="tab-btn kunitsu" data-system="国津神">🌾 国津神</button>
+        <button class="tab-btn other" data-system="その他">👤 その他</button>
+      </div>
+
+      <!-- 神様カード一覧（JSで動的生成） -->
+      <div id="godList" class="god-list">
+        <!-- ここにCSVから読み込んだ神様カードが並びます -->
+      </div>
+    </section>
+
+    <!-- 右カラム：詳細 ＆ FamilyTree エリア -->
+    <section class="detail-section">
+      
+      <!-- 表示モード切り替えタブ -->
+      <div class="view-tabs">
+        <button class="view-tab-btn active" data-view="detail">📜 神様詳細</button>
+        <button class="view-tab-btn" data-view="tree">🌳 FamilyTree（系譜図）</button>
+      </div>
+
+      <!-- パネル1: 神様詳細ビュー -->
+      <div id="detailView" class="view-panel active">
+        <div id="godDetailContent" class="detail-content">
+          <p class="placeholder-text">左側のリストから神様を選択してください。</p>
+        </div>
+      </div>
+
+      <!-- パネル2: FamilyTreeビュー -->
+      <div id="treeView" class="view-panel">
+        <div id="familyTreeContainer" class="tree-container">
+          <!-- Vis.jsでインタラクティブな系譜図を描画します -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- フッター -->
+  <footer class="app-footer">
+    <span>📊 登録数: <strong id="godCount">0</strong> 柱</span>
+    <span>🔗 データ連携: kamisama_master.csv</span>
+  </footer>
+
+  <!-- JavaScriptスクリプト読み込み -->
+  <script src="js/app.js"></script>
+  <script src="js/tree.js"></script>
+</body>
+</html>

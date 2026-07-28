@@ -38,10 +38,10 @@ function renderFamilyTree(targetGodId) {
       label: `${god.name}\n(${god.yomi})`,
       level: level,
       shape: 'box',
-      margin: 10,
+      margin: 12, // カード内の余白を少し調整
       font: {
         face: 'Yu Mincho, 游明朝, serif',
-        size: isCenter ? 16 : 13,
+        size: isCenter ? 15 : 13,
         color: textColor,
         bold: isCenter
       },
@@ -94,7 +94,7 @@ function renderFamilyTree(targetGodId) {
     }
   });
 
-  // 3. Vis.js のレイアウトオプション設定
+  // 3. Vis.js のレイアウトオプション設定（間隔を広く調整）
   const data = {
     nodes: new vis.DataSet(nodes),
     edges: new vis.DataSet(edges)
@@ -103,13 +103,13 @@ function renderFamilyTree(targetGodId) {
   const options = {
     layout: {
       hierarchical: {
-        direction: 'UD', // 上から下への階層レイアウト (Up-Down)
+        direction: 'UD',         // 上から下への階層レイアウト
         sortMethod: 'directed',
-        nodeSpacing: 150,
-        levelSeparation: 100
+        nodeSpacing: 240,        // 横の間隔を大幅に広げて余裕を確保 (旧: 150)
+        levelSeparation: 140     // 上下の階層間隔を広げて矢印とラベルの重なりを解消 (旧: 100)
       }
     },
-    physics: false, // ノードが勝手に動かないよう固定
+    physics: false, // ノードの位置を固定
     interaction: {
       hover: true,
       zoomView: true,
@@ -119,7 +119,7 @@ function renderFamilyTree(targetGodId) {
 
   // 4. 描画の実行
   if (networkInstance) {
-    networkInstance.destroy(); // 既存のツリーを破棄してリセット
+    networkInstance.destroy();
   }
   networkInstance = new vis.Network(container, data, options);
 
@@ -127,7 +127,6 @@ function renderFamilyTree(targetGodId) {
   networkInstance.on('click', function(params) {
     if (params.nodes.length > 0) {
       const clickedGodId = params.nodes[0];
-      // タップされた神様へ選択切り替え (app.js の関数を呼び出し)
       if (typeof selectGod === 'function') {
         selectGod(clickedGodId);
       }

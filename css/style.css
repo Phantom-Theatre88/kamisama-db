@@ -1,5 +1,5 @@
 /* ============================================================
-   八百万の神々 神社探訪マップ - 総合CSS (Step 4 UI拡張)
+   八百万の神々 神社探訪マップ ＆ 神さま台帳 総合CSS (完全復元版)
    ============================================================ */
 
 /* 1. リセット & 基本設定 */
@@ -72,7 +72,7 @@ body {
     border-radius: 16px;
     font-size: 0.85rem;
     outline: none;
-    width: 220px;
+    width: 240px;
 }
 
 .header-search input::placeholder {
@@ -81,7 +81,7 @@ body {
 
 /* 3. ビュー切り替え制御 */
 .view-section {
-    display: none; /* デフォルト非表示 */
+    display: none;
     flex: 1;
     position: relative;
     width: 100%;
@@ -90,7 +90,7 @@ body {
 }
 
 .view-section.active {
-    display: flex; /* アクティブなビューのみ表示 */
+    display: flex;
 }
 
 /* 4. マップビュー領域 */
@@ -113,7 +113,7 @@ body {
     background-size: cover;
 }
 
-/* 左サイドバー */
+/* 左サイドバー (マップ用) */
 #sidebar {
     position: absolute;
     top: 20px;
@@ -207,76 +207,174 @@ body {
     bottom: 0;
 }
 
-/* 5. 神さま図鑑 & 参拝ログ ビュー共通 */
-.view-container {
-    padding: 30px;
+/* ============================================================
+   5. 【完全復元】神さま台帳ビュー (左右2分割 UI)
+   ============================================================ */
+.god-daicho-container {
+    display: flex;
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    overflow-y: auto;
     height: 100%;
-}
-
-.view-container h2 {
-    font-size: 1.5rem;
-    color: #8c1d1d;
-    border-bottom: 2px solid #8c1d1d;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-}
-
-.view-desc {
-    font-size: 0.9rem;
-    color: #555;
-    margin-bottom: 20px;
-}
-
-/* 神さまグリッドレイアウト */
-.god-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 16px;
-    padding-bottom: 40px;
-}
-
-.god-card {
-    background: rgba(255,255,255,0.7);
-    border: 1px solid #c2b180;
-    border-radius: 6px;
     padding: 16px;
+    gap: 16px;
+}
+
+/* 左パネル (リスト・カテゴリー) */
+.god-left-panel {
+    width: 380px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid #c2b180;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.god-category-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.god-cat-tab {
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 8px 4px;
+    border-radius: 6px;
+    font-size: 0.8rem;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    transition: all 0.2s;
 }
 
-.god-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-color: #8c1d1d;
+.god-cat-tab.active {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border-color: #1a1a1a;
+    font-weight: bold;
 }
 
-.god-card h3 {
-    font-size: 1.1rem;
+.god-list-scroll {
+    flex: 1;
+    overflow-y: auto;
+}
+
+#god-daicho-list {
+    list-style: none;
+}
+
+#god-daicho-list li {
+    background: #fff5f5;
+    border: 1px solid #f0d8d8;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#god-daicho-list li:hover, #god-daicho-list li.selected {
+    background: #fff0f0;
+    border: 2px solid #1a1a1a;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.god-item-name {
+    font-size: 1.05rem;
+    font-weight: bold;
     color: #1a1a1a;
-    margin-bottom: 4px;
 }
 
-.god-card .god-yomi {
+.god-item-yomi {
     font-size: 0.75rem;
     color: #666;
-    margin-bottom: 8px;
+    margin-top: 2px;
+    margin-bottom: 6px;
 }
 
-.god-card .god-system {
+.god-badge {
     display: inline-block;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     background-color: #8c1d1d;
     color: #fff;
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-bottom: 8px;
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
-/* 6. モーダル & ボタン類 */
+/* 右パネル (詳細 & FamilyTree) */
+.god-right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid #c2b180;
+    border-radius: 8px;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.god-detail-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 8px;
+}
+
+.god-view-tab {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.god-view-tab.active {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border-color: #1a1a1a;
+    font-weight: bold;
+}
+
+.god-tab-content {
+    display: none;
+    flex: 1;
+    overflow: auto;
+    position: relative;
+}
+
+.god-tab-content.active {
+    display: block;
+}
+
+#embedded-tree-container {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    overflow: auto;
+}
+
+/* Placeholder */
+.placeholder-text {
+    color: #888;
+    text-align: center;
+    margin-top: 100px;
+    font-size: 0.95rem;
+}
+
+/* 6. マーカー & モーダル */
+.jinja-marker {
+    background: transparent;
+    border: none;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -334,51 +432,4 @@ body {
 
 .god-link:hover {
     color: #8c1d1d;
-}
-
-/* ============================================================
-   神社ピン（マーカー）表示用スタイル (視認性重視版)
-   ============================================================ */
-
-/* マーカーの基本外枠 */
-.jinja-marker {
-    background: transparent;
-    border: none;
-}
-
-/* マーカーの丸型デザイン（黄金ベース＋くっきり黒枠） */
-.jinja-icon-inner {
-    width: 32px;
-    height: 32px;
-    background-color: #f4efd3; /* 明るい生成り色 */
-    border: 2px solid #8c1d1d;  /* 朱色枠 */
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-}
-
-/* マーカー内の鳥居絵文字（鮮やかな朱色＋クッキリ影） */
-.jinja-icon-inner::after {
-    content: "⛩";
-    font-size: 18px;
-    line-height: 1;
-    color: #e60012; /* 鮮やかな鳥居の赤 */
-    text-shadow: 0px 0px 2px #ffffff; /* 白縁取り効果で視認性向上 */
-}
-
-/* ホバー時の強調 */
-.jinja-icon-inner:hover {
-    transform: scale(1.25);
-    background-color: #8c1d1d; /* 朱色に反転 */
-    border-color: #d4af37;     /* 枠線をゴールドに */
-    box-shadow: 0 4px 12px rgba(140, 29, 29, 0.6);
-}
-
-.jinja-icon-inner:hover::after {
-    color: #ffffff; /* ホバー時は鳥居を白に変化 */
-    text-shadow: none;
 }

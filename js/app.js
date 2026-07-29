@@ -1,6 +1,6 @@
 // ============================================================
 // 八百万の神々 神社探訪マップ ＆ 神さま台帳
-// Step 3: 完全データ連携＆相関図(tree.js)結合プログラム
+// Step 4: 複数ビュー切り替え ＆ 神さま図鑑自動生成プログラム
 // ============================================================
 
 // --- グローバル変数 ---
@@ -17,7 +17,7 @@ let currentFilters = { search: '', shikinaisha: 'all' };
 // 1. 初期化処理 (ページ読み込み時に実行)
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('--- 探訪マップ (Step 3) 初期化開始 ---');
+    console.log('--- 探訪マップ (Step 4) 初期化開始 ---');
 
     try {
         const [rawKamisama, rawJinja] = await Promise.all([
@@ -48,8 +48,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderMarkers();
     renderJinjaList();
     initEventListeners();
+    initViewSwitching(); // Step 4: タブ切り替え処理初期化
 
-    console.log('--- 探訪マップ (Step 3) 初期化完了 ---');
+    console.log('--- 探訪マップ (Step 4) 初期化完了 ---');
 });
 
 // オブジェクトキーのBOM(\ufeff)や余白を自動クレンジングする関数
@@ -150,7 +151,6 @@ function renderGodLinks(godIds) {
     const rawIds = godIds.split(/[,|、\s]+/).map(id => id.trim()).filter(id => id.length > 0);
 
     const matchedLinks = rawIds.map(targetId => {
-        // Map から一発照合
         const kamisama = window.kamisamaMap.get(targetId);
         if (kamisama) {
             return `<span class="god-link" onclick="openGodTree('${kamisama.id}')">${kamisama.name}</span>`;
@@ -176,7 +176,76 @@ function openGodTree(kamisamaId) {
 }
 
 // ============================================================
-// 5. リスト・フィルター・イベント制御
+// 5. Step 4: 複数ビュー切り替え ＆ 神さま図鑑レンダリング
+// ============================================================
+function initViewSwitching() {
+    const tabs = document.querySelectorAll('.nav-tab');
+    const views = document.querySelectorAll('.view-section');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetViewId = tab.dataset.view;
+
+            // タブの表示状態変更
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // ビューの表示状態変更
+            views.forEach(v => {
+                if (v.id === targetViewId) {
+                    v.classList.add('active');
+                } else {
+                    v.classList.remove('active');
+                }
+            });
+
+            // マップ表示に戻った場合、Leafletのレイアウト崩れを防ぐため再計算
+            if (targetViewId === 'map-view' && window.map) {
+                setTimeout(() => {
+                    window.map.invalidateSize();
+                }, 200);
+            }
+
+            // 神さま図鑑タブが開かれた場合、カード一覧を自動描画
+            if (targetViewId === 'god-view') {
+                renderGodGrid();
+            }
+        });
+    });
+}
+
+// 神さま図鑑（カード一覧）の自動描画関数
+function renderGodGrid() {
+    const gridEl = document.getElementById('god-list-grid');
+    if (!gridEl) return;
+
+    if (!window.kamisamaData || window.kamisamaData.length === 0) {
+        gridEl.innerHTML = '<p>神さまデータを読み込み中です...</p>';
+        return;
+    }
+
+    gridEl.innerHTML = ''; // クリア
+
+    window.kamisamaData.forEach(god => {
+        const card = document.createElement('div');
+        card.className = 'god-card';
+        card.onclick = () => openGodTree(god.id);
+
+        card.innerHTML = `
+            <h3>${god.name || god.id}</h3>
+            <div class="god-yomi">${god.yomi || ''}</div>
+            ${god.system ? `<span class="god-system">${god.system}</span>` : ''}
+            <p style="font-size: 0.8rem; color: #444; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                ${god.description || god.summary || '詳細情報準備中'}
+            </p>
+        `;
+
+        gridEl.appendChild(card);
+    });
+}
+
+// ============================================================
+// 6. リスト・フィルター・イベント制御
 // ============================================================
 function renderJinjaList() {
     const listEl = document.getElementById('jinja-list');

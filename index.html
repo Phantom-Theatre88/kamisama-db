@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>八百万の神々 神社＆神々探訪マップ - 荘厳UI版 -</title>
     
-    <!-- ★重要：Google Fonts (Noto Serif JP) の読み込みを追加★ -->
+    <!-- Google Fonts (Noto Serif JP) -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Leaflet.js (地図ライブラリ) CSS -->
@@ -44,7 +44,7 @@
         <div id="detail-content"></div>
     </div>
 
-    <!-- FamilyTreeモーダル (既存) -->
+    <!-- FamilyTreeモーダル -->
     <div id="tree-modal" class="modal washi-texture">
         <div class="modal-content">
             <button id="modal-close" class="close-btn">×</button>
@@ -52,12 +52,11 @@
         </div>
     </div>
 
-    <!-- ライブラリとスクリプトの読み込み -->
+    <!-- ライブラリとスクリプトの読み込み（キャッシュ対策バージョン付与） -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     
-    <!-- ※ js/config.js は読み込みません ※ -->
-    <script src="js/tree.js"></script>
-    <script src="js/app.js"></script> <!-- 踏まえている最新版 -->
+    <script src="js/tree.js?v=20260729_01"></script>
+    <script src="js/app.js?v=20260729_01"></script>
 </body>
 </html>

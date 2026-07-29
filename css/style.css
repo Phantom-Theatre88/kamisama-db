@@ -1,189 +1,301 @@
 /* ============================================================
-   【荘厳デザイン統合版】神社探訪マップ＆神さま台帳スタイル
+   八百万の神々 神社探訪マップ ＆ 神さま台帳 
+   真・完全統合スタイルシート（荘厳和風デザイン）
    ============================================================ */
 
-/* --- 1. 共通設定・荘厳テーマ (漆黒・黄金・和紙) --- */
+/* ------------------------------------------------------------
+   1. 共通変数設定 (和の伝統色)
+   ------------------------------------------------------------ */
 :root {
-    --bg-dark: #0a0a0a;       /* 漆黒 */
-    --gold: #d4af37;          /* 黄金 */
-    --gold-dim: #aa8822;      /* 沈金 */
-    --washi-bg: url('../img/washi_texture.png'); /* 和紙テクスチャ (TODO) */
-    
-    /* 系統別メインカラー (提示された神さま用の色を維持・和の様式美へ補正) */
-    --color-amatsu: #2e5b40;       /* 天津神：竹・松の緑 */
-    --bg-amatsu: rgba(46, 91, 64, 0.1); /* 和紙に沈むよう、透過率を補正 */
-    --color-kunitsu: #8c2d19;      /* 国津神：朱・エンジ色 */
-    --bg-kunitsu: rgba(140, 45, 25, 0.1);
-    --color-other: #3a3858;        /* その他：紫紺 */
-    --bg-other: rgba(58, 56, 88, 0.1);
+  /* 荘厳ベースカラー */
+  --bg-lacquer: #0a0a0a;         /* 漆黒 */
+  --bg-washi: #f0e6cc;           /* 和紙・生成り色 */
+  --text-dark: #1a1a1a;          /* 墨 */
+  --text-light: #e0e0e0;
+  
+  /* 黄金・沈金 */
+  --gold-main: #d4af37;          /* 黄金 */
+  --gold-dim: #aa8822;           /* 沈金細工 */
+  --torii-red: #b30000;          /* 朱 */
 
-    --border-radius-lg: 12px;
-    --border-radius-sm: 8px;
-    --font-jp: 'Noto Serif JP', serif; /* 明朝体 */
+  /* 神さま台帳 系統別カラー (提示CSSを完全維持) */
+  --color-amatsu: #2e5b40;       /* 天津神：竹・松の緑 */
+  --color-kunitsu: #8c2d19;      /* 国津神：朱・エンジ色 */
+  --color-other: #3a3858;        /* その他：紫紺 */
+
+  /* 視覚効果 */
+  --washi-bg-img: url('../img/washi_texture.png'); /* (TODO) */
+  --font-mincho: 'Noto Serif JP', serif; /* 明朝体 */
+  --border-radius-washi: 8px;    /* わずかに丸み */
 }
-
-/* 2. 画面全体の設定 (地図をメインにし、提示された神さま台帳のレイアウトを包含) */
-body, html {
-    margin: 0; padding: 0;
-    height: 100%; width: 100%;
-    background: var(--bg-dark);
-    font-family: var(--font-jp);
-    overflow: hidden; /* スクロールを殺す */
-}
-
-* { box-sizing: border-box; }
-
-/* 3. ヘッダー (漆黒・黄金) */
-header {
-    background: #000;
-    color: var(--gold);
-    padding: 12px 24px;
-    display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid var(--gold-dim);
-    position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
-}
-
-header h1 { margin: 0; font-size: 1.2rem; font-weight: normal; letter-spacing: 1px;}
-.torii { color: #b30000; margin-right: 5px; }
-
-.search-container input {
-    background: #1a1a1a; border: 1px solid var(--gold-dim);
-    color: #e0e0e0; padding: 8px 16px; border-radius: 20px;
-    font-size: 0.9rem; font-family: var(--font-jp);
-}
-
-/* 4. メイン領域：地図 (真っ白な団子状態から、画面いっぱいに広げる) */
-#map {
-    height: 100vh; width: 100vw;
-    background: #f0e6cc; /* 地図のベース色 (OSM) */
-}
-
-/* 独自ズームコントロール (和風に補正) */
-.leaflet-control-zoom-in, .leaflet-control-zoom-out {
-    background-color: var(--bg-dark) !important; color: var(--gold) !important;
-    border-color: var(--gold-dim) !important;
-}
-
-/* 5. 荘厳ピン（神紋） */
-.jinja-marker { background: none; border: none; }
-.jinja-icon-inner {
-    width: 30px; height: 30px;
-    background-size: contain; background-repeat: no-repeat;
-    filter: drop-shadow(0 0 5px var(--gold)); /* 御神火の光 */
-}
-
-/* (各神紋アイコンの設定は中略) */
 
 /* ------------------------------------------------------------
-   【★重要】 神さま台帳のリスト・詳細レイアウト (提示CSSをそのまま統合)
+   2. 全体レイアウト & リセット
    ------------------------------------------------------------ */
-
-/* メイン 2カラムレイアウト（iPad最適化） */
-/* ※地図モードでは使用せず、神さま台帳モード切替用 */
-.app-container {
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-  overflow: hidden;
-  height: calc(100vh - 60px); /* ヘッダー分を引く */
-  position: absolute; top: 60px; left: 0; right: 0; z-index: 900;
-  display: none; /* 初期は地図モードなので隠す */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* 左カラム：リストエリア */
-.list-section {
-  flex: 1;
+body, html {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-mincho);
+  background-color: var(--bg-lacquer);
+  color: var(--text-light);
+  overflow: hidden; /* 地図をメインにするため全体スクロール禁止 */
+}
+
+/* ------------------------------------------------------------
+   3. ヘッダー (漆黒 & 黄金)
+   ------------------------------------------------------------ */
+header.main-header {
+  height: 60px; /* 高さ固定 */
+  background: #000;
+  color: var(--gold-main);
+  padding: 0 24px;
   display: flex;
-  flex-direction: column;
-  background: rgba(240, 230, 204, 0.8); /* 和紙質感に補正 */
-  background-image: var(--washi-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 12px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--gold-dim);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
+}
+
+header.main-header h1 {
+  font-size: 1.2rem;
+  font-weight: normal;
+  letter-spacing: 1px;
+}
+
+header.main-header h1 .torii {
+  color: var(--torii-red);
+  margin-right: 8px;
+}
+
+/* 検索バー (漆黒に沈む沈金細工風) */
+.header-search input {
+  background-color: #1a1a1a;
+  color: var(--text-light);
   border: 1px solid var(--gold-dim);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: var(--font-mincho);
+  font-size: 0.9rem;
 }
 
-/* 右カラム：詳細・Treeエリア */
-.detail-section {
-  flex: 1.2;
+/* ------------------------------------------------------------
+   4. メイン：地図 (OpenStreetMap)
+   ------------------------------------------------------------ */
+#map {
+  position: absolute;
+  top: 60px; /* ヘッダーの下から開始 */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-washi);
+  z-index: 1; /* 地図は一番下 */
+}
+
+/* 独自ズームコントロール (沈金風) */
+.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+  background-color: var(--bg-lacquer) !important;
+  color: var(--gold-main) !important;
+  border-color: var(--gold-dim) !important;
+}
+
+/* ------------------------------------------------------------
+   5. ピン（荘厳神紋）
+   ------------------------------------------------------------ */
+.jinja-marker {
+  background: none;
+  border: none;
+}
+
+.jinja-icon-inner {
+  width: 30px;
+  height: 30px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  /* 御神火の光 */
+  filter: drop-shadow(0 0 5px var(--gold-main));
+}
+
+/* ------------------------------------------------------------
+   6. 左サイドバー (和紙質感・漆黒ベース)
+   ------------------------------------------------------------ */
+#sidebar {
+  position: absolute;
+  top: 70px; /* 地図から少し浮かせる */
+  left: 10px;
+  bottom: 10px;
+  width: 300px;
+  z-index: 900;
+  background-color: var(--bg-washi);
+  background-image: var(--washi-bg-img);
+  color: var(--text-dark);
+  border: 2px solid var(--gold-dim);
+  border-radius: var(--border-radius-washi);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
-  background: #ffffff; /* 白を維持 */
-  border-radius: var(--border-radius-lg);
-  padding: 16px;
-  border: 1px solid #e0d8cd;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: left 0.3s ease;
+  overflow: hidden; /* 団子状態防止 */
 }
 
-/* タブボタン（検索フィルター＆ビュー切替） */
-.filter-tabs, .view-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+/* サイドバーが隠れた状態 (iPad対応) */
+#sidebar.collapsed {
+  left: -310px;
 }
 
-.tab-btn, .view-tab-btn {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  background: #fff;
-  border-radius: 8px;
+/* 切替ボタン (漆黒の和風ボタン) */
+#sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  right: -80px; /* サイドバーの外に配置 */
+  padding: 8px 15px;
+  background: var(--bg-lacquer);
+  color: var(--gold-main);
+  border: 2px solid var(--gold-dim);
+  border-radius: 0 5px 5px 0;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-family: var(--font-jp);
-}
-
-.tab-btn.active, .view-tab-btn.active {
-  background: var(--bg-dark); /* 漆黒へ */
-  color: var(--gold); /* 黄金へ */
-  border-color: var(--gold-dim);
+  font-family: var(--font-mincho);
   font-weight: bold;
 }
 
-/* 神様リスト＆カードデザイン（提示CSSを維持・色分け完璧） */
-.god-list {
+/* サイドバーコンテンツ */
+.sidebar-content {
+  padding: 20px;
   flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-right: 4px;
+  overflow: hidden; /* コンテンツ全体でスクロールを殺す */
 }
 
-.god-card {
-  padding: 14px 16px;
-  border-radius: 10px;
-  border-left: 6px solid #ccc;
-  background: #fff;
+/* フィルター・神社リストタイトル */
+.filter-group h3, .jinja-list-container h3 {
+  font-size: 1rem;
+  color: var(--text-dark);
+  border-bottom: 1px solid var(--gold-dim);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+/* ------------------------------------------------------------
+   7. 【核心】神さまリスト（提示CSSを和様式に昇華）
+   ------------------------------------------------------------ */
+.jinja-list-container {
+  flex: 1; /* 残りの高さをすべて使う */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#jinja-list {
+  list-style: none;
+  flex: 1; /* リスト自体でスクロール */
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+/* 神社リストアイテム（提示CSSの god-card 系統別色分けを維持） */
+#jinja-list li {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
   cursor: pointer;
-  font-family: var(--font-jp);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 5px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+  /* 提示CSSの明朝体維持 */
+  font-family: "Hiragino Mincho ProN", serif;
 }
 
-/* 系統別色分け（カード全体の背景とワンポイント線） - 提示CSSを維持 */
-.god-card.amatsu {
-  border-left-color: var(--color-amatsu);
-  background-color: var(--bg-amatsu);
+#jinja-list li:hover {
+  background: rgba(212, 175, 55, 0.1);
+  transform: translateX(3px);
 }
 
-.god-card.kunitsu {
-  border-left-color: var(--color-kunitsu);
-  background-color: var(--bg-kunitsu);
+/* 選択された神社のハイライト */
+#jinja-list li.selected {
+  background: rgba(212, 175, 55, 0.2);
+  border-left: 5px solid var(--gold-main);
+  outline: none; /* 提示CSSのoutlineを和に変更 */
 }
 
-.god-card.other {
-  border-left-color: var(--color-other);
-  background-color: var(--bg-other);
+#jinja-list li .list-shrine-name {
+  font-size: 1rem;
+  font-weight: bold;
 }
 
-.god-card .god-name { font-size: 1.1rem; font-weight: bold; }
-.god-card .god-yomi { font-size: 0.8rem; color: #666; margin-top: 2px; }
-
-.god-card .god-badge {
-  display: inline-block; margin-top: 6px; padding: 2px 8px; font-size: 0.75rem;
-  border-radius: 4px; color: #fff;
+#jinja-list li .list-shrine-meta {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
 }
 
-.god-card.amatsu .god-badge { background-color: var(--color-amatsu); }
-.god-card.kunitsu .god-badge { background-color: var(--color-kunitsu); }
-.god-card.other .god-badge { background-color: var(--color-other); }
+/* ------------------------------------------------------------
+   8. 詳細パネル (和紙風・下からポップアップ)
+   ------------------------------------------------------------ */
+#detail-panel {
+  position: absolute;
+  bottom: -400px; /* 隠れた状態 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  height: 350px;
+  z-index: 950;
+  background-color: var(--bg-washi);
+  background-image: var(--washi-bg-img);
+  border: 2px solid var(--gold-dim);
+  border-radius: var(--border-radius-washi) var(--border-radius-washi) 0 0;
+  transition: bottom 0.3s ease;
+  box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+  font-family: var(--font-mincho);
+}
 
-/* (以下略。詳細表示、FamilyTreeモーダルなどのCSSは以前提示した統合版に含まれています) */
+#detail-panel.open {
+  bottom: 0;
+}
+
+#detail-content {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto; /* 詳細が長い場合はスクロール */
+  color: var(--text-dark);
+}
+
+/* 社名見出し（提示詳細CSSを統合） */
+#detail-content h2 {
+  font-size: 1.6rem;
+  border-bottom: 2px solid var(--gold-dim);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+/* 神さまへの黄金リンク */
+.god-link {
+  color: #8c2d19; /* 朱色 */
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* ボタン (沈金細工風) */
+.jinja-btn {
+  background-color: var(--bg-lacquer);
+  color: var(--gold-main);
+  border: 2px solid var(--gold-dim);
+  padding: 10px 20px;
+  font-family: var(--font-mincho);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.jinja-btn:hover {
+  background-color: #000;
+  box-shadow: 0 0 10px var(--gold-main);
+}

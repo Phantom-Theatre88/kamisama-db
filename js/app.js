@@ -81,8 +81,6 @@ function renderMarkers() {
     filteredJinja.forEach(jinja => {
         
         // --- ★重要：データ防御処理★ ---
-        // 緯度(lat)や経度(lng)が不正（空、数字でない、URL）な場合は、
-        // エラーを出さずに飛ばす（consoleに警告を出す）
         const lat = parseFloat(jinja.lat);
         const lng = parseFloat(jinja.lng);
 
@@ -115,7 +113,9 @@ function renderMarkers() {
     });
 }
 
-// --- 詳細パネル・リスト生成・FamilyTree連携などのロジックは統合版を維持 ---
+// ============================================================
+// 4. 詳細パネルの表示 & 神さまリンク生成
+// ============================================================
 function showDetailPanel(jinja) {
     const detailContent = document.getElementById('detail-content');
     
@@ -123,22 +123,24 @@ function showDetailPanel(jinja) {
         <h2>${jinja.name}</h2>
         <p class="yomi">(${jinja.yomi})</p>
         <div class="shrine-meta">
-            <span>旧社格: ${jinja.former_shrine_rank}</span> / 
-            <span>${jinja.shikinaisha_type}</span> / 
-            <span>${jinja.province}國 ${jinja.county}郡</span>
+            <span>旧社格: ${jinja.former_shrine_rank || '―'}</span> / 
+            <span>${jinja.shikinaisha_type || '―'}</span> / 
+            <span>${jinja.province || ''}國 ${jinja.county || ''}郡</span>
         </div>
-        <p class="address">所在地: ${jinja.address}</p>
+        <p class="address">所在地: ${jinja.address || '―'}</p>
         
         <div class="god-section">
             <h3>祭神</h3>
-            <div id="main-gods">
+            <div id="main-gods" class="god-list-container">
                 ${renderGodLinks(jinja.main_god_ids)}
             </div>
         </div>
 
-        <p class="description">${jinja.description}</p>
+        <p class="description">${jinja.description || ''}</p>
 
-        <a href="${jinja.gmap_url}" target="_blank" class="jinja-btn nav-btn">🗺 Google Mapsで開く（ナビ起動）</a>
+        <div class="action-btn-wrapper" style="margin-top: 15px;">
+            <a href="${jinja.gmap_url}" target="_blank" class="jinja-btn nav-btn" style="display: inline-block;">🗺 Google Mapsで開く（ナビ起動）</a>
+        </div>
     `;
 
     document.getElementById('detail-panel').classList.add('open');
@@ -146,27 +148,21 @@ function showDetailPanel(jinja) {
 }
 
 function renderGodLinks(godIds) {
-    if (!godIds) return '（不詳）';
+    if (!godIds || typeof godIds !== 'string') return '（不詳）';
 
-    // カンマ、縦棒、読点等で分割し、空文字を除去
-    const idArray = godIds.split(/[,|、]/).map(id => id.trim()).filter(id => id.length > 0);
+    // カンマ、縦棒、スペースなどで区切り、前後の余白・改行文字を除去
+    const rawIds = godIds.split(/[,|、\s]+/).map(id => id.trim()).filter(id => id.length > 0);
 
-    const matchedNames = idArray.map(id => {
-        // IDから数値のみを抜き出して照合（例: K032 と K0032 をともに 32 として照合）
-        const targetNum = parseInt(id.replace(/[^0-9]/g, ''), 10);
-
-        const kamisama = kamisamaData.find(k => {
-            const kNum = parseInt(k.id.replace(/[^0-9]/g, ''), 10);
-            return kNum === targetNum;
-        });
-
+    const matchedLinks = rawIds.map(targetId => {
+        // kamisama_master.csv 内の id と余白を除去して完全一致検索
+        const kamisama = kamisamaData.find(k => k.id && k.id.trim() === targetId);
         if (kamisama) {
-            return `<span class="god-link" onclick="openGodTree('${kamisama.id}')">${kamisama.name}</span>`;
+            return `<span class="god-link" onclick="openGodTree('${kamisama.id.trim()}')" style="cursor: pointer; text-decoration: underline; color: #d4af37; font-weight: bold;">${kamisama.name}</span>`;
         }
         return null;
-    }).filter(item => item !== null);
+    }).filter(link => link !== null);
 
-    return matchedNames.length > 0 ? matchedNames.join('、') : '（不詳）';
+    return matchedLinks.length > 0 ? matchedLinks.join('、') : '（不詳）';
 }
 
 function openGodTree(kamisamaId) {
@@ -177,6 +173,9 @@ function openGodTree(kamisamaId) {
     }
 }
 
+// ============================================================
+// 5. 神社リスト・フィルター・イベント処理
+// ============================================================
 function renderJinjaList() {
     const listEl = document.getElementById('jinja-list');
     listEl.innerHTML = '';
@@ -228,5 +227,8 @@ function initEventListeners() {
         document.getElementById('detail-panel').classList.remove('open');
     });
     // モーダル閉じる (tree.js依存)
-    document.getElementById('modal-close').addEventListener('click', hideTreeModal);
+    const modalCloseBtn = document.getElementById('modal-close');
+    if (modalCloseBtn && typeof hideTreeModal === 'function') {
+        modalCloseBtn.addEventListener('click', hideTreeModal);
+    }
 }

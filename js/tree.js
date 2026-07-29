@@ -1,135 +1,69 @@
-// Vis.js ネットワークインスタンスの保持
-let networkInstance = null;
+// ============================================================
+// 八百万の神々 神さま詳細 FamilyTree プログラム
+// ============================================================
 
-// FamilyTreeの描画関数
-function renderFamilyTree(targetGodId) {
-  const container = document.getElementById('familyTreeContainer');
-  if (!container) return;
+// --- グローバル変数 ---
+let godTreeData = []; // kamisama_family_tree.csv
 
-  const targetGod = allGods.find(g => g.id === targetGodId);
-  if (!targetGod) return;
-
-  // 1. ノード（神様カード）とエッジ（繋ぐ線）のデータ作成
-  const nodes = [];
-  const edges = [];
-  const addedNodeIds = new Set();
-
-  // ノード追加用のヘルパー関数
-  function addGodNode(god, level, isCenter = false) {
-    if (!god || addedNodeIds.has(god.id)) return;
-
-    // 系統色設定（天津神: 緑, 国津神: 赤, その他: 紫）
-    let bgColor = '#eef5f0';
-    let borderColor = '#2e5b40';
-    let textColor = '#1b3827';
-
-    if (god.system_type === '国津神') {
-      bgColor = '#fcf0ed';
-      borderColor = '#8c2d19';
-      textColor = '#591b0f';
-    } else if (god.system_type === 'その他') {
-      bgColor = '#f1f0f7';
-      borderColor = '#3a3858';
-      textColor = '#222136';
+// --- 【重要】 TODO実装：モーダルを表示する関数 ---
+// js/app.js から呼び出されます
+function showTreeModal(kamisamaId) {
+    console.log(`FamilyTree表示: ID ${kamisamaId}`);
+    
+    // kamisamaMasterから神さま情報を取得
+    const kamisama = kamisamaData.find(k => k.id === kamisamaId);
+    if (!kamisama) {
+        console.error('神さまデータが見つかりません');
+        return;
     }
 
-    nodes.push({
-      id: god.id,
-      label: `${god.name}\n(${god.yomi})`,
-      level: level,
-      shape: 'box',
-      margin: 12, // カード内の余白を少し調整
-      font: {
-        face: 'Yu Mincho, 游明朝, serif',
-        size: isCenter ? 15 : 13,
-        color: textColor,
-        bold: isCenter
-      },
-      color: {
-        background: bgColor,
-        border: borderColor,
-        highlight: {
-          background: '#ffffff',
-          border: '#1f1e2e'
-        }
-      },
-      borderWidth: isCenter ? 3 : 1.5,
-      shadow: isCenter
-    });
+    const treeContainer = document.getElementById('tree-container');
+    
+    // 【ID非表示】 ID (K0032など) は表示しない
+    treeContainer.innerHTML = `
+        <div class="tree-header">
+            <h2>${kamisama.name}</h2>
+            <p class="yomi">(${kamisama.yomi})</p>
+        </div>
+        
+        <div class="description-box washi-texture">
+            ${kamisama.description}
+        </div>
+        
+        <!-- 【TODO】 ここにD3.jsによる FamilyTree(系統図)の描画が入ります -->
+        <div class="tree-graph">
+            <p class="placeholder-text"> FamilyTree(系統図)は現在準備中です。 </p>
+        </div>
+        
+        <!-- 【TODO】 この神様を祀る神社一覧へのジャンプボタン（連携強化） -->
+        <div class="shrine-links">
+            <button class="jinja-btn washi-texture" onclick="jumpToShrines('${kamisamaId}')">
+                ⛩ この神様を祀る神社一覧
+            </button>
+        </div>
+    `;
 
-    addedNodeIds.add(god.id);
-  }
-
-  // 中心神の追加 (Level 2: 中央)
-  addGodNode(targetGod, 2, true);
-
-  // 2. 関連神の抽出と追加
-  // 父・母 (Level 1: 上段)
-  const father = allGods.find(g => g.id === targetGod.father_id);
-  const mother = allGods.find(g => g.id === targetGod.mother_id);
-
-  if (father) {
-    addGodNode(father, 1);
-    edges.push({ from: father.id, to: targetGod.id, label: '父', arrows: 'to', color: { color: '#888' } });
-  }
-  if (mother) {
-    addGodNode(mother, 1);
-    edges.push({ from: mother.id, to: targetGod.id, label: '母', arrows: 'to', color: { color: '#888' } });
-  }
-
-  // 配偶神 (Level 2: 同段)
-  const spouse = allGods.find(g => g.id === targetGod.spouse_id);
-  if (spouse) {
-    addGodNode(spouse, 2);
-    edges.push({ from: targetGod.id, to: spouse.id, label: '配偶', dashes: true, color: { color: '#b57c1e' } });
-  }
-
-  // 子神 (Level 3: 下段)
-  const childIds = targetGod.child_ids ? targetGod.child_ids.split('|') : [];
-  childIds.forEach(childId => {
-    const child = allGods.find(g => g.id === childId);
-    if (child) {
-      addGodNode(child, 3);
-      edges.push({ from: targetGod.id, to: child.id, label: '子', arrows: 'to', color: { color: '#888' } });
-    }
-  });
-
-  // 3. Vis.js のレイアウトオプション設定（間隔を広く調整）
-  const data = {
-    nodes: new vis.DataSet(nodes),
-    edges: new vis.DataSet(edges)
-  };
-
-  const options = {
-    layout: {
-      hierarchical: {
-        direction: 'UD',         // 上から下への階層レイアウト
-        sortMethod: 'directed',
-        nodeSpacing: 240,        // 横の間隔を大幅に広げて余裕を確保 (旧: 150)
-        levelSeparation: 140     // 上下の階層間隔を広げて矢印とラベルの重なりを解消 (旧: 100)
-      }
-    },
-    physics: false, // ノードの位置を固定
-    interaction: {
-      hover: true,
-      zoomView: true,
-      dragView: true
-    }
-  };
-
-  // 4. 描画の実行
-  if (networkInstance) {
-    networkInstance.destroy();
-  }
-  networkInstance = new vis.Network(container, data, options);
-
-  // 5. ノードタップ（クリック）イベント
-  networkInstance.on('click', function(params) {
-    if (params.nodes.length > 0) {
-      const clickedGodId = params.nodes[0];
-      if (typeof selectGod === 'function') {
-        selectGod(clickedGodId);
-      }
-    }
-  });
+    document.getElementById('tree-modal').classList.add('open'); // モーダルを開く
 }
+
+// モーダルを閉じる関数
+function hideTreeModal() {
+    document.getElementById('tree-modal').classList.remove('open'); // モーダルを閉じる
+}
+
+// 【TODO】 神さま台帳 ➔ 神社台帳（地図）への連携処理
+function jumpToShrines(kamisamaId) {
+    // 神社台帳（js/app.js）のフィルターに、この神さまIDをセットして、
+    // 地図のピンとリストを絞り込む処理（TODO）
+    console.log(`神社一覧へジャンプ (TODO): ${kamisamaId}`);
+    
+    // 連携処理の実装（TODO）
+    // currentFilters.search = kamisamaId; 
+    // renderMarkers(); renderJinjaList();
+
+    // モーダルを閉じる
+    hideTreeModal();
+}
+
+// --- D3.jsによる FamilyTree(系統図)の描画ロジック (TODO) ---
+// ... (FamilyTree D3.jsの実装) ...

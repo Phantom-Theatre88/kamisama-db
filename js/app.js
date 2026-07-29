@@ -1,22 +1,23 @@
 // ============================================================
 // 八百万の神々 神社探訪マップ ＆ 神さま台帳
-// 完全一本化プログラム (データ照合・レイアウト最適化版)
+// Step 3: 完全データ連携＆相関図(tree.js)結合プログラム
 // ============================================================
 
 // --- グローバル変数 ---
 window.map = null;            // Leaflet 地図オブジェクト
-window.jinjaData = [];        // 神社データ (CSV)
-window.kamisamaData = [];     // 神さまデータ (CSV)
-window.markersLayer = null;   // ピンをまとめるレイヤー
+window.jinjaData = [];        // 神社データ (配列)
+window.kamisamaData = [];     // 神さまデータ (配列)
+window.kamisamaMap = new Map(); // 神さまデータ高速検索用マップ (ID -> オブジェクト)
+window.markersLayer = null;   // 地図ピンレイヤー
 
 // フィルター初期値
-let currentFilters = { search: '', shikinaisha: 'all', godSystem: 'all' };
+let currentFilters = { search: '', shikinaisha: 'all' };
 
 // ============================================================
 // 1. 初期化処理 (ページ読み込み時に実行)
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('--- 探訪マップ 初期化開始 ---');
+    console.log('--- 探訪マップ (Step 3) 初期化開始 ---');
 
     try {
         const [rawKamisama, rawJinja] = await Promise.all([
@@ -24,13 +25,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             d3.csv('data/jinja_master.csv')
         ]);
 
-        // キーのBOM(\ufeff)や余白を自動クレンジングしてグローバル保持
+        // キーの余白・BOMをクレンジングして保持
         window.kamisamaData = rawKamisama.map(item => sanitizeObjectKeys(item));
         window.jinjaData = rawJinja.map(item => sanitizeObjectKeys(item));
 
-        console.log(`データ読み込み完了: 神さま ${window.kamisamaData.length}柱, 神社 ${window.jinjaData.length}社`);
+        // 高速検索用 Map の作成 (IDをキーにする)
+        window.kamisamaMap.clear();
+        window.kamisamaData.forEach(k => {
+            if (k.id) {
+                window.kamisamaMap.set(k.id, k);
+            }
+        });
+
+        console.log(`データ読み込み成功: 神さま ${window.kamisamaData.length}柱, 神社 ${window.jinjaData.length}社`);
     } catch (e) {
-        console.error('データの読み込みに失敗しました:', e);
+        console.error('CSVデータの読み込みに失敗しました:', e);
         initMap();
         return;
     }
@@ -40,10 +49,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderJinjaList();
     initEventListeners();
 
-    console.log('--- 探訪マップ 初期化完了 ---');
+    console.log('--- 探訪マップ (Step 3) 初期化完了 ---');
 });
 
-// オブジェクトキーのクレンジング関数
+// オブジェクトキーのBOM(\ufeff)や余白を自動クレンジングする関数
 function sanitizeObjectKeys(obj) {
     const cleanObj = {};
     Object.keys(obj).forEach(key => {
@@ -58,7 +67,6 @@ function sanitizeObjectKeys(obj) {
 // 2. 地図の初期化 (Leaflet + OpenStreetMap)
 // ============================================================
 function initMap() {
-    console.log('地図初期化 (OSM)');
     window.map = L.map('map', {
         zoomControl: false,
         minZoom: 5, maxZoom: 18
@@ -69,11 +77,10 @@ function initMap() {
     }).addTo(window.map);
 
     window.markersLayer = L.layerGroup().addTo(window.map);
-    console.log('地図初期化完了');
 }
 
 // ============================================================
-// 3. ピン（荘厳神紋）の配置 & データ防御
+// 3. ピンの配置 & クリックイベント設定
 // ============================================================
 function renderMarkers() {
     if (!window.markersLayer) return;
@@ -84,17 +91,14 @@ function renderMarkers() {
         const lat = parseFloat(jinja.lat);
         const lng = parseFloat(jinja.lng);
 
-        if (isNaN(lat) || isNaN(lng) || 
-            (typeof jinja.lat === 'string' && jinja.lat.startsWith('http')) || 
-            (typeof jinja.lng === 'string' && jinja.lng.startsWith('http'))) {
-            return;
-        }
+        if (isNaN(lat) || isNaN(lng)) return;
 
         const iconHtml = `<div class="jinja-icon-inner icon-${jinja.id ? jinja.id.toLowerCase() : ''}" data-jinja-id="${jinja.id}"></div>`;
         const icon = L.divIcon({
             className: 'jinja-marker',
             html: iconHtml,
-            iconSize: [30, 30], iconAnchor: [15, 15]
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
         });
 
         const marker = L.marker([lat, lng], { icon: icon, title: jinja.name });
@@ -104,11 +108,9 @@ function renderMarkers() {
 }
 
 // ============================================================
-// 4. 詳細パネル描画 & 神さまリンク生成 (一本化)
+// 4. 詳細パネル描画 & 相関図(tree.js)完全連動
 // ============================================================
 function showDetailPanel(jinja) {
-    console.log('▶ showDetailPanel 実行:', jinja.name, 'main_god_ids:', jinja.main_god_ids);
-
     const detailContent = document.getElementById('detail-content');
     
     detailContent.innerHTML = `
@@ -121,17 +123,17 @@ function showDetailPanel(jinja) {
         </div>
         <p class="address">所在地: ${jinja.address || '―'}</p>
         
-        <div class="god-section" style="margin: 12px 0;">
-            <h3 style="margin-bottom: 6px; font-weight: bold;">祭神</h3>
+        <div class="god-section">
+            <h3 style="margin-bottom: 6px; font-size: 0.95rem; font-weight: bold;">主祭神</h3>
             <div id="main-gods" class="god-list-container" style="line-height: 1.6;">
                 ${renderGodLinks(jinja.main_god_ids)}
             </div>
         </div>
 
-        <p class="description" style="margin: 10px 0; font-size: 0.9em; line-height: 1.5;">${jinja.description || ''}</p>
+        <p class="description" style="margin: 12px 0; font-size: 0.85rem; line-height: 1.6;">${jinja.description || ''}</p>
 
-        <div class="action-btn-wrapper" style="margin-top: 20px; text-align: center;">
-            <a href="${jinja.gmap_url || '#'}" target="_blank" class="jinja-btn nav-btn" style="display: block; width: 100%; box-sizing: border-box; text-decoration: none;">🗺 Google Mapsで開く（ナビ起動）</a>
+        <div class="action-btn-wrapper">
+            <a href="${jinja.gmap_url || '#'}" target="_blank" class="jinja-btn nav-btn">🗺 Google Mapsで開く（ナビ起動）</a>
         </div>
     `;
 
@@ -141,17 +143,17 @@ function showDetailPanel(jinja) {
     }
 }
 
+// 神さまIDからゴールドリンク(クリックで相関図起動)を生成する関数
 function renderGodLinks(godIds) {
     if (!godIds || typeof godIds !== 'string') return '（不詳）';
 
-    // カンマ、縦棒、読点、スペース等で分割
     const rawIds = godIds.split(/[,|、\s]+/).map(id => id.trim()).filter(id => id.length > 0);
 
     const matchedLinks = rawIds.map(targetId => {
-        // クレンジング済みの window.kamisamaData から完全一致検索
-        const kamisama = window.kamisamaData.find(k => k.id === targetId);
+        // Map から一発照合
+        const kamisama = window.kamisamaMap.get(targetId);
         if (kamisama) {
-            return `<span class="god-link" onclick="openGodTree('${kamisama.id}')" style="cursor: pointer; text-decoration: underline; color: #d4af37; font-weight: bold; margin-right: 4px;">${kamisama.name}</span>`;
+            return `<span class="god-link" onclick="openGodTree('${kamisama.id}')">${kamisama.name}</span>`;
         }
         return null;
     }).filter(link => link !== null);
@@ -159,11 +161,17 @@ function renderGodLinks(godIds) {
     return matchedLinks.length > 0 ? matchedLinks.join('、') : '（不詳）';
 }
 
+// 祭神クリック時に tree.js のモーダルを立ち上げる関数
 function openGodTree(kamisamaId) {
+    console.log('▶ 相関図呼び出し: 神さまID', kamisamaId);
     if (typeof showTreeModal === 'function') {
         showTreeModal(kamisamaId); 
+    } else if (typeof renderFamilyTree === 'function') {
+        renderFamilyTree(kamisamaId);
+        const modal = document.getElementById('tree-modal');
+        if (modal) modal.classList.add('open');
     } else {
-        console.error('FamilyTree表示関数(showTreeModal)が見つかりません。js/tree.jsを確認してください。');
+        console.error('FamilyTree表示関数が見つかりません。js/tree.js を確認してください。');
     }
 }
 
@@ -175,6 +183,7 @@ function renderJinjaList() {
     if (!listEl) return;
     listEl.innerHTML = '';
     const filteredJinja = filterData();
+
     filteredJinja.forEach(jinja => {
         const li = document.createElement('li');
         li.dataset.jinjaId = jinja.id;
@@ -194,10 +203,7 @@ function filterData() {
             (jinja.name && jinja.name.includes(currentFilters.search)) ||
             (jinja.yomi && jinja.yomi.includes(currentFilters.search)) ||
             (jinja.address && jinja.address.includes(currentFilters.search));
-        const shikinaishaMatch = currentFilters.shikinaisha === 'all' ||
-            jinja.shikinaisha_type === currentFilters.shikinaisha;
-        const godSystemMatch = true;
-        return searchMatch && shikinaishaMatch && godSystemMatch;
+        return searchMatch;
     });
 }
 
@@ -205,13 +211,16 @@ function selectJinja(jinjaId) {
     if (!window.jinjaData) return;
     const jinja = window.jinjaData.find(j => j.id === jinjaId);
     if (!jinja) return;
+
     document.querySelectorAll('#jinja-list li').forEach(li => li.classList.remove('selected'));
     const li = document.querySelector(`#jinja-list li[data-jinja-id="${jinjaId}"]`);
     if (li) li.classList.add('selected');
+
     showDetailPanel(jinja);
 }
 
 function initEventListeners() {
+    // 検索入力
     const searchEl = document.getElementById('jinja-search');
     if (searchEl) {
         searchEl.addEventListener('input', (e) => {
@@ -221,6 +230,7 @@ function initEventListeners() {
         });
     }
 
+    // サイドバー開閉
     const toggleBtn = document.getElementById('sidebar-toggle');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
@@ -228,6 +238,7 @@ function initEventListeners() {
         });
     }
 
+    // 詳細パネル閉じるボタン
     const closeBtn = document.getElementById('detail-close');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
@@ -235,8 +246,12 @@ function initEventListeners() {
         });
     }
     
+    // モーダル閉じるボタン
     const modalCloseBtn = document.getElementById('modal-close');
-    if (modalCloseBtn && typeof hideTreeModal === 'function') {
-        modalCloseBtn.addEventListener('click', hideTreeModal);
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', () => {
+            const modal = document.getElementById('tree-modal');
+            if (modal) modal.classList.remove('open');
+        });
     }
 }

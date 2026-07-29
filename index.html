@@ -8,11 +8,11 @@
     <!-- Google Fonts (Noto Serif JP) -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- Leaflet.js (地図ライブラリ) CSS -->
+    <!-- Leaflet.js CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <!-- 独自のスタイル -->
-    <link rel="stylesheet" href="css/style.css?v=20260730_10">
+    <link rel="stylesheet" href="css/style.css?v=20260730_99">
 </head>
 <body class="map-mode">
     
@@ -32,9 +32,7 @@
         </div>
     </header>
 
-    <!-- ============================================================ -->
-    <!-- 1. 神社マップビュー                                           -->
-    <!-- ============================================================ -->
+    <!-- 1. 神社マップビュー -->
     <div id="map-view" class="view-section active">
         <main id="map"></main>
 
@@ -56,13 +54,11 @@
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- 2. 神さま図鑑（台帳）ビュー 【完成UIの復元エリア】           -->
-    <!-- ============================================================ -->
+    <!-- 2. 神さま図鑑（台帳 UI 完全復元版） -->
     <div id="god-view" class="view-section washi-texture">
         <div class="god-daicho-container">
             
-            <!-- 左パネル: 系統フィルター ＆ 神さまリスト -->
+            <!-- 左パネル: 系統カテゴリー ＆ リスト -->
             <div class="god-left-panel">
                 <div class="god-category-tabs">
                     <button class="god-cat-tab active" data-cat="all">すべて</button>
@@ -75,21 +71,21 @@
                 </div>
             </div>
 
-            <!-- 右パネル: 詳細 ＆ FamilyTree（相関図） -->
+            <!-- 右パネル: 詳細 ＆ FamilyTree (系譜図) -->
             <div class="god-right-panel">
                 <div class="god-detail-tabs">
                     <button class="god-view-tab" data-tab="detail">📜 神様詳細</button>
                     <button class="god-view-tab active" data-tab="tree">🌳 FamilyTree (系譜図)</button>
                 </div>
                 
-                <!-- 詳細表示コンテンツ -->
+                <!-- 神様詳細タブのコンテンツ -->
                 <div id="god-tab-detail-content" class="god-tab-content">
                     <div id="god-profile-display">
                         <p class="placeholder-text">左側のリストから神さまを選択してください。</p>
                     </div>
                 </div>
 
-                <!-- FamilyTree描画領域 -->
+                <!-- FamilyTreeタブのコンテンツ -->
                 <div id="god-tab-tree-content" class="god-tab-content active">
                     <div id="embedded-tree-container"></div>
                 </div>
@@ -98,9 +94,7 @@
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- 3. 参拝ログビュー                                             -->
-    <!-- ============================================================ -->
+    <!-- 3. 参拝ログビュー -->
     <div id="log-view" class="view-section washi-texture">
         <div class="view-container">
             <h2>📖 参拝録</h2>
@@ -109,7 +103,7 @@
         </div>
     </div>
 
-    <!-- ポップアップモーダル（マップからの相関図呼び出し用） -->
+    <!-- モーダル -->
     <div id="tree-modal" class="modal washi-texture">
         <div class="modal-content">
             <button id="modal-close" class="close-btn">×</button>
@@ -117,11 +111,11 @@
         </div>
     </div>
 
-    <!-- スクリプトの読み込み -->
+    <!-- スクリプト読み込み -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     
-    <script src="js/tree.js?v=20260730_10"></script>
-    <script src="js/app.js?v=20260730_10"></script>
+    <script src="js/tree.js?v=20260730_99"></script>
+    <script src="js/app.js?v=20260730_99"></script>
 </body>
 </html>

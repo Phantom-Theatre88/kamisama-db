@@ -1,6 +1,6 @@
 // ============================================================
 // 八百万の神々 神社探訪マップ ＆ 神さま台帳
-// Step 4: 複数ビュー切り替え ＆ 神さま図鑑自動生成プログラム
+// 左右2分割 台帳UI完全復元 ＆ ナビゲーション連携プログラム
 // ============================================================
 
 // --- グローバル変数 ---
@@ -10,14 +10,16 @@ window.kamisamaData = [];     // 神さまデータ (配列)
 window.kamisamaMap = new Map(); // 神さまデータ高速検索用マップ (ID -> オブジェクト)
 window.markersLayer = null;   // 地図ピンレイヤー
 
-// フィルター初期値
+// 現在選択中の状態
+let selectedKamisamaId = null;
+let currentCategory = 'all';
 let currentFilters = { search: '', shikinaisha: 'all' };
 
 // ============================================================
 // 1. 初期化処理 (ページ読み込み時に実行)
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('--- 探訪マップ (Step 4) 初期化開始 ---');
+    console.log('--- 探訪マップ & 台帳 初期化開始 ---');
 
     try {
         const [rawKamisama, rawJinja] = await Promise.all([
@@ -48,12 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderMarkers();
     renderJinjaList();
     initEventListeners();
-    initViewSwitching(); // Step 4: タブ切り替え処理初期化
+    initViewSwitching();   // ビュー切り替え初期化
+    initDaichoEvents();    // 台帳内部イベント初期化
+    renderGodDaichoList(); // 神さまリスト初期描画
 
-    console.log('--- 探訪マップ (Step 4) 初期化完了 ---');
+    console.log('--- 探訪マップ & 台帳 初期化完了 ---');
 });
 
-// オブジェクトキーのBOM(\ufeff)や余白を自動クレンジングする関数
+// クレンジング関数
 function sanitizeObjectKeys(obj) {
     const cleanObj = {};
     Object.keys(obj).forEach(key => {
@@ -94,9 +98,25 @@ function renderMarkers() {
 
         if (isNaN(lat) || isNaN(lng)) return;
 
-        const iconHtml = `<div class="jinja-icon-inner icon-${jinja.id ? jinja.id.toLowerCase() : ''}" data-jinja-id="${jinja.id}"></div>`;
+        const iconHtml = `
+            <div style="
+                width: 32px; 
+                height: 32px; 
+                background-color: #f4efd3; 
+                border: 2px solid #8c1d1d; 
+                border-radius: 50%; 
+                box-shadow: 0 2px 6px rgba(0,0,0,0.4); 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                font-size: 18px; 
+                line-height: 1; 
+                cursor: pointer;
+            ">⛩</div>
+        `;
+
         const icon = L.divIcon({
-            className: 'jinja-marker',
+            className: 'custom-torii-marker',
             html: iconHtml,
             iconSize: [32, 32],
             iconAnchor: [16, 16]
@@ -109,7 +129,7 @@ function renderMarkers() {
 }
 
 // ============================================================
-// 4. 詳細パネル描画 & 相関図(tree.js)完全連動
+// 4. 詳細パネル描画 & 神さま図鑑へダイレクト移動
 // ============================================================
 function showDetailPanel(jinja) {
     const detailContent = document.getElementById('detail-content');
@@ -144,7 +164,7 @@ function showDetailPanel(jinja) {
     }
 }
 
-// 神さまIDからゴールドリンク(クリックで相関図起動)を生成する関数
+// 祭神リンク生成（クリックで神さま図鑑タブへ移動して対象選択）
 function renderGodLinks(godIds) {
     if (!godIds || typeof godIds !== 'string') return '（不詳）';
 
@@ -153,7 +173,7 @@ function renderGodLinks(godIds) {
     const matchedLinks = rawIds.map(targetId => {
         const kamisama = window.kamisamaMap.get(targetId);
         if (kamisama) {
-            return `<span class="god-link" onclick="openGodTree('${kamisama.id}')">${kamisama.name}</span>`;
+            return `<span class="god-link" onclick="goToGodDaicho('${kamisama.id}')">${kamisama.name}</span>`;
         }
         return null;
     }).filter(link => link !== null);
@@ -161,22 +181,138 @@ function renderGodLinks(godIds) {
     return matchedLinks.length > 0 ? matchedLinks.join('、') : '（不詳）';
 }
 
-// 祭神クリック時に tree.js のモーダルを立ち上げる関数
-function openGodTree(kamisamaId) {
-    console.log('▶ 相関図呼び出し: 神さまID', kamisamaId);
-    if (typeof showTreeModal === 'function') {
-        showTreeModal(kamisamaId); 
-    } else if (typeof renderFamilyTree === 'function') {
-        renderFamilyTree(kamisamaId);
-        const modal = document.getElementById('tree-modal');
-        if (modal) modal.classList.add('open');
-    } else {
-        console.error('FamilyTree表示関数が見つかりません。js/tree.js を確認してください。');
-    }
+// 祭神クリック時：神社マップから神さま図鑑タブへ飛ぶ処理
+function goToGodDaicho(kamisamaId) {
+    // 1. 神さま図鑑タブに切り替え
+    const godTab = document.querySelector('.nav-tab[data-view="god-view"]');
+    if (godTab) godTab.click();
+
+    // 2. 詳細パネルを閉じる
+    document.getElementById('detail-panel').classList.remove('open');
+
+    // 3. 対象の神さまを選択
+    selectKamisamaInDaicho(kamisamaId);
 }
 
 // ============================================================
-// 5. Step 4: 複数ビュー切り替え ＆ 神さま図鑑レンダリング
+// 5. 神さま台帳 (左リスト ＆ 右詳細/FamilyTree) ロジック
+// ============================================================
+
+// 左リストの描画処理
+function renderGodDaichoList() {
+    const listEl = document.getElementById('god-daicho-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    const filtered = window.kamisamaData.filter(god => {
+        if (currentCategory === 'all') return true;
+        if (currentCategory === 'amatsukami') return god.system === '天津神';
+        if (currentCategory === 'kunitsukami') return god.system === '国津神';
+        if (currentCategory === 'other') return god.system !== '天津神' && god.system !== '国津神';
+        return true;
+    });
+
+    filtered.forEach(god => {
+        const li = document.createElement('li');
+        li.dataset.godId = god.id;
+        if (god.id === selectedKamisamaId) li.classList.add('selected');
+
+        li.innerHTML = `
+            <div class="god-item-name">${god.name || god.id}</div>
+            <div class="god-item-yomi">${god.yomi || ''}</div>
+            ${god.system ? `<span class="god-badge">${god.system}</span>` : ''}
+        `;
+
+        li.addEventListener('click', () => selectKamisamaInDaicho(god.id));
+        listEl.appendChild(li);
+    });
+
+    // 最初の1柱を自動選択（未選択時）
+    if (!selectedKamisamaId && filtered.length > 0) {
+        selectKamisamaInDaicho(filtered[0].id);
+    }
+}
+
+// 神さま選択時の右パネル描画処理
+function selectKamisamaInDaicho(kamisamaId) {
+    selectedKamisamaId = kamisamaId;
+    const god = window.kamisamaMap.get(kamisamaId);
+    if (!god) return;
+
+    // 左リストのハイライト更新
+    document.querySelectorAll('#god-daicho-list li').forEach(li => {
+        li.classList.toggle('selected', li.dataset.godId === kamisamaId);
+    });
+
+    // 右パネル: 1. 神様詳細の描画
+    const profileEl = document.getElementById('god-profile-display');
+    if (profileEl) {
+        profileEl.innerHTML = `
+            <h2 style="font-size: 1.4rem; color: #8c1d1d; margin-bottom: 4px;">${god.name}</h2>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">(${god.yomi || ''})</p>
+            <div style="margin-bottom: 12px;">
+                <span class="god-badge">${god.system || '系統不明'}</span>
+            </div>
+            <p style="font-size: 0.9rem; line-height: 1.6; color: #333; margin-bottom: 16px;">
+                ${god.description || god.summary || '詳細情報準備中'}
+            </p>
+        `;
+    }
+
+    // 右パネル: 2. FamilyTree (tree.js) の埋め込み描画
+    const treeContainer = document.getElementById('embedded-tree-container');
+    if (treeContainer) {
+        treeContainer.innerHTML = ''; // クリア
+        if (typeof renderFamilyTree === 'function') {
+            renderFamilyTree(kamisamaId, '#embedded-tree-container');
+        } else if (typeof showTreeModal === 'function') {
+            showTreeModal(kamisamaId, '#embedded-tree-container');
+        }
+    }
+}
+
+// 台帳内部のタブ・カテゴリーイベント設定
+function initDaichoEvents() {
+    // 1. 左側カテゴリータブ
+    const catTabs = document.querySelectorAll('.god-cat-tab');
+    catTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            catTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentCategory = tab.dataset.cat;
+            renderGodDaichoList();
+        });
+    });
+
+    // 2. 右側詳細/FamilyTree切り替えタブ
+    const viewTabs = document.querySelectorAll('.god-view-tab');
+    const tabContents = document.querySelectorAll('.god-tab-content');
+
+    viewTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.tab;
+
+            viewTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            tabContents.forEach(c => {
+                if (c.id === `god-tab-${targetTab}-content`) {
+                    c.classList.add('active');
+                } else {
+                    c.classList.remove('active');
+                }
+            });
+
+            // FamilyTreeタブが開かれたらサイズを再計算
+            if (targetTab === 'tree' && selectedKamisamaId) {
+                selectKamisamaInDaicho(selectedKamisamaId);
+            }
+        });
+    });
+}
+
+// ============================================================
+// 6. ビュー切り替え ＆ 全体イベント制御
 // ============================================================
 function initViewSwitching() {
     const tabs = document.querySelectorAll('.nav-tab');
@@ -186,67 +322,24 @@ function initViewSwitching() {
         tab.addEventListener('click', () => {
             const targetViewId = tab.dataset.view;
 
-            // タブの表示状態変更
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
 
-            // ビューの表示状態変更
             views.forEach(v => {
-                if (v.id === targetViewId) {
-                    v.classList.add('active');
-                } else {
-                    v.classList.remove('active');
-                }
+                v.classList.toggle('active', v.id === targetViewId);
             });
 
-            // マップ表示に戻った場合、Leafletのレイアウト崩れを防ぐため再計算
             if (targetViewId === 'map-view' && window.map) {
-                setTimeout(() => {
-                    window.map.invalidateSize();
-                }, 200);
+                setTimeout(() => window.map.invalidateSize(), 200);
             }
 
-            // 神さま図鑑タブが開かれた場合、カード一覧を自動描画
             if (targetViewId === 'god-view') {
-                renderGodGrid();
+                renderGodDaichoList();
             }
         });
     });
 }
 
-// 神さま図鑑（カード一覧）の自動描画関数
-function renderGodGrid() {
-    const gridEl = document.getElementById('god-list-grid');
-    if (!gridEl) return;
-
-    if (!window.kamisamaData || window.kamisamaData.length === 0) {
-        gridEl.innerHTML = '<p>神さまデータを読み込み中です...</p>';
-        return;
-    }
-
-    gridEl.innerHTML = ''; // クリア
-
-    window.kamisamaData.forEach(god => {
-        const card = document.createElement('div');
-        card.className = 'god-card';
-        card.onclick = () => openGodTree(god.id);
-
-        card.innerHTML = `
-            <h3>${god.name || god.id}</h3>
-            <div class="god-yomi">${god.yomi || ''}</div>
-            ${god.system ? `<span class="god-system">${god.system}</span>` : ''}
-            <p style="font-size: 0.8rem; color: #444; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                ${god.description || god.summary || '詳細情報準備中'}
-            </p>
-        `;
-
-        gridEl.appendChild(card);
-    });
-}
-
-// ============================================================
-// 6. リスト・フィルター・イベント制御
-// ============================================================
 function renderJinjaList() {
     const listEl = document.getElementById('jinja-list');
     if (!listEl) return;
@@ -289,7 +382,6 @@ function selectJinja(jinjaId) {
 }
 
 function initEventListeners() {
-    // 検索入力
     const searchEl = document.getElementById('jinja-search');
     if (searchEl) {
         searchEl.addEventListener('input', (e) => {
@@ -299,7 +391,6 @@ function initEventListeners() {
         });
     }
 
-    // サイドバー開閉
     const toggleBtn = document.getElementById('sidebar-toggle');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
@@ -307,7 +398,6 @@ function initEventListeners() {
         });
     }
 
-    // 詳細パネル閉じるボタン
     const closeBtn = document.getElementById('detail-close');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
@@ -315,7 +405,6 @@ function initEventListeners() {
         });
     }
     
-    // モーダル閉じるボタン
     const modalCloseBtn = document.getElementById('modal-close');
     if (modalCloseBtn) {
         modalCloseBtn.addEventListener('click', () => {

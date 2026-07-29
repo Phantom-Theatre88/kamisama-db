@@ -335,3 +335,41 @@ body {
 .god-link:hover {
     color: #8c1d1d;
 }
+/* ============================================================
+   神社ピン（マーカー）表示用スタイル
+   ============================================================ */
+
+/* マーカーの基本外枠 */
+.jinja-marker {
+    background: transparent;
+    border: none;
+}
+
+/* マーカーの丸型デザイン */
+.jinja-icon-inner {
+    width: 32px;
+    height: 32px;
+    background-color: #1a1a1a;
+    border: 2px solid #d4af37;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* マーカー内の鳥居絵文字 */
+.jinja-icon-inner::after {
+    content: "⛩";
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* ホバー時の拡大アニメーション */
+.jinja-icon-inner:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.6);
+    background-color: #8c1d1d;
+}

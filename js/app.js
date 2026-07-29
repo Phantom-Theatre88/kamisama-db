@@ -1,6 +1,6 @@
 // ============================================================
 // 八百万の神々 神社探訪マップ ＆ 神さま台帳
-// 左右2分割 台帳UI完全復元 ＆ ナビゲーション連携プログラム
+// 左右2分割 台帳UI完全連動 ＆ ナビゲーション連携プログラム
 // ============================================================
 
 // --- グローバル変数 ---
@@ -183,14 +183,10 @@ function renderGodLinks(godIds) {
 
 // 祭神クリック時：神社マップから神さま図鑑タブへ飛ぶ処理
 function goToGodDaicho(kamisamaId) {
-    // 1. 神さま図鑑タブに切り替え
     const godTab = document.querySelector('.nav-tab[data-view="god-view"]');
     if (godTab) godTab.click();
 
-    // 2. 詳細パネルを閉じる
     document.getElementById('detail-panel').classList.remove('open');
-
-    // 3. 対象の神さまを選択
     selectKamisamaInDaicho(kamisamaId);
 }
 
@@ -262,7 +258,7 @@ function selectKamisamaInDaicho(kamisamaId) {
     // 右パネル: 2. FamilyTree (tree.js) の埋め込み描画
     const treeContainer = document.getElementById('embedded-tree-container');
     if (treeContainer) {
-        treeContainer.innerHTML = ''; // クリア
+        treeContainer.innerHTML = '';
         if (typeof renderFamilyTree === 'function') {
             renderFamilyTree(kamisamaId, '#embedded-tree-container');
         } else if (typeof showTreeModal === 'function') {
@@ -296,14 +292,9 @@ function initDaichoEvents() {
             tab.classList.add('active');
 
             tabContents.forEach(c => {
-                if (c.id === `god-tab-${targetTab}-content`) {
-                    c.classList.add('active');
-                } else {
-                    c.classList.remove('active');
-                }
+                c.classList.toggle('active', c.id === `god-tab-${targetTab}-content`);
             });
 
-            // FamilyTreeタブが開かれたらサイズを再計算
             if (targetTab === 'tree' && selectedKamisamaId) {
                 selectKamisamaInDaicho(selectedKamisamaId);
             }

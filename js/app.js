@@ -1,6 +1,6 @@
 // ============================================================
 // 八百万の神々 神社探訪マップ ＆ 神さま台帳
-// 完全統合プログラム (不正データ防御 & ID非表示版)
+// 真・完全統合プログラム (OSM・不正データ防御・ID非表示)
 // ============================================================
 
 // --- グローバル変数 ---
@@ -32,10 +32,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // 2. 地図の初期化 (OpenStreetMap)
+    // 2. 地図の初期化 (OpenStreetMapタイルを使用)
     initMap();
 
-    // 3. ピン（神紋）の配置 (不正データは自動で飛ばす)
+    // 3. ピン（荘厳神紋）の配置 (不正データは自動で防御)
     renderMarkers();
 
     // 4. 神社リストの生成 (ID非表示)
@@ -95,7 +95,6 @@ function renderMarkers() {
         // ------------------------------
 
         // 莊嚴ピン (神紋) のHTMLを定義 (css/style.cssの .jinja-marker 等を利用)
-        // IDをID属性に持たせることで、クリックイベントで取得可能
         const iconHtml = `<div class="jinja-icon-inner icon-${jinja.id.toLowerCase()}" data-jinja-id="${jinja.id}"></div>`;
         const icon = L.divIcon({
             className: 'jinja-marker', // 漆黒・黄金のCSS
@@ -116,13 +115,10 @@ function renderMarkers() {
     });
 }
 
-// ============================================================
-// 4. 詳細パネルの生成 & ID非表示
-// ============================================================
+// --- 詳細パネル・リスト生成・FamilyTree連携などのロジックは統合版を維持 ---
 function showDetailPanel(jinja) {
     const detailContent = document.getElementById('detail-content');
     
-    // 【ID非表示】 ID (J0002など) は生成するHTMLに含めない
     detailContent.innerHTML = `
         <h2>${jinja.name}</h2>
         <p class="yomi">(${jinja.yomi})</p>
@@ -149,25 +145,19 @@ function showDetailPanel(jinja) {
     map.flyTo([jinja.lat, jinja.lng], 13); // 地図をズーム
 }
 
-// 祭神IDから神さま名へのリンクを生成する (IDは非表示)
 function renderGodLinks(godIds) {
     if (!godIds) return '（不詳）';
-    const idArray = godIds.split('|'); // 複数の神さまIDを分離
+    const idArray = godIds.split('|');
     return idArray.map(id => {
         const kamisama = kamisamaData.find(k => k.id === id);
-        // 【ID非表示】 ID (K0032など) は表示せず、御名だけを表示
         if (kamisama) {
-            // クリックで FamilyTreeを開く (onclick属性を利用)
             return `<span class="god-link" onclick="openGodTree('${kamisama.id}')">${kamisama.name}</span>`;
         }
         return '';
     }).join('、');
 }
 
-// --- FamilyTreeモーダル (既存 tree.jsに依存) ---
 function openGodTree(kamisamaId) {
-    // 荘厳UIのCSSクラス（--gold-main等）を FamilyTreeにも反映させるため、
-    // ここで tree.jsの関数を呼び出す。
     if (typeof showTreeModal === 'function') {
         showTreeModal(kamisamaId); 
     } else {
@@ -175,92 +165,56 @@ function openGodTree(kamisamaId) {
     }
 }
 
-// ============================================================
-// 5. 神社リストの生成 & フィルター
-// ============================================================
-
-// --- データフィルターロジック ---
-function filterData() {
-    return jinjaData.filter(jinja => {
-        // 検索ワード (社名・よみ・所在地)
-        const searchMatch = !currentFilters.search || 
-            jinja.name.includes(currentFilters.search) ||
-            jinja.yomi.includes(currentFilters.search) ||
-            jinja.address.includes(currentFilters.search);
-
-        // 式内社格 (小社、名神大など)
-        const shikinaishaMatch = currentFilters.shikinaisha === 'all' ||
-            jinja.shikinaisha_type === currentFilters.shikinaisha;
-
-        // 【TODO】 系統 (天津神・国津神)
-        const godSystemMatch = true; // 現在は連携していないのでスルー
-
-        return searchMatch && shikinaishaMatch && godSystemMatch;
-    });
-}
-
-// --- 神社リストの生成 (和紙質感のリスト) ---
 function renderJinjaList() {
     const listEl = document.getElementById('jinja-list');
     listEl.innerHTML = '';
-    
     const filteredJinja = filterData();
-
     filteredJinja.forEach(jinja => {
         const li = document.createElement('li');
-        li.dataset.jinjaId = jinja.id; // IDはdatasetに持たせる (非表示)
-        
-        // 【ID非表示】 リストにもIDは出さず、社名とよみ、旧国名をカッコよく表示
+        li.dataset.jinjaId = jinja.id;
         li.innerHTML = `
             <div class="list-shrine-name">${jinja.name}</div>
             <div class="list-shrine-meta">${jinja.yomi} / ${jinja.province}國</div>
         `;
-
-        // リストクリック時のイベント
         li.addEventListener('click', () => selectJinja(jinja.id));
         listEl.appendChild(li);
     });
 }
 
-// --- 神社を選択 (リストクリック、またはピンタップ時) ---
+function filterData() {
+    return jinjaData.filter(jinja => {
+        const searchMatch = !currentFilters.search || 
+            jinja.name.includes(currentFilters.search) ||
+            jinja.yomi.includes(currentFilters.search) ||
+            jinja.address.includes(currentFilters.search);
+        const shikinaishaMatch = currentFilters.shikinaisha === 'all' ||
+            jinja.shikinaisha_type === currentFilters.shikinaisha;
+        const godSystemMatch = true; // TODO: 系統連携
+        return searchMatch && shikinaishaMatch && godSystemMatch;
+    });
+}
+
 function selectJinja(jinjaId) {
     const jinja = jinjaData.find(j => j.id === jinjaId);
     if (!jinja) return;
-
-    // 1. リストのハイライト解除と再設定
     document.querySelectorAll('#jinja-list li').forEach(li => li.classList.remove('selected'));
     const li = document.querySelector(`#jinja-list li[data-jinja-id="${jinjaId}"]`);
     if (li) li.classList.add('selected');
-
-    // 2. 詳細パネルを表示
     showDetailPanel(jinja);
 }
 
-// ============================================================
-// 6. イベントリスナーの設定
-// ============================================================
 function initEventListeners() {
-    // 検索バー
     document.getElementById('jinja-search').addEventListener('input', (e) => {
         currentFilters.search = e.target.value;
         renderMarkers();
         renderJinjaList();
     });
-
-    // サイドバー切替 ( collapsedクラスの付け外し )
     document.getElementById('sidebar-toggle').addEventListener('click', () => {
         document.getElementById('sidebar').classList.toggle('collapsed');
     });
-
-    // 詳細パネル閉じる ( openクラスの削除 )
     document.getElementById('detail-close').addEventListener('click', () => {
         document.getElementById('detail-panel').classList.remove('open');
     });
-
-    // 【既存】モーダル閉じる (tree.jsの hideTreeModalを呼び出す)
-    document.getElementById('modal-close').addEventListener('click', () => {
-        if (typeof hideTreeModal === 'function') {
-            hideTreeModal();
-        }
-    });
+    // モーダル閉じる (tree.js依存)
+    document.getElementById('modal-close').addEventListener('click', hideTreeModal);
 }

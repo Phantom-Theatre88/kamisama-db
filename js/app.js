@@ -4,10 +4,10 @@
 // ============================================================
 
 // --- グローバル変数 ---
-let map;                // Leaflet 地図オブジェクト
-let jinjaData = [];     // 神社データ (CSV)
-let kamisamaData = [];  // 神さまデータ (CSV)
-let markersLayer;      // ピンをまとめるレイヤー
+window.map = null;            // Leaflet 地図オブジェクト
+window.jinjaData = [];        // 神社データ (CSV)
+window.kamisamaData = [];     // 神さまデータ (CSV)
+window.markersLayer = null;   // ピンをまとめるレイヤー
 
 // フィルター初期値
 let currentFilters = { search: '', shikinaisha: 'all', godSystem: 'all' };
@@ -19,11 +19,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('--- 探訪マップ 初期化開始 ---');
 
     try {
-        [kamisamaData, jinjaData] = await Promise.all([
+        const [rawKamisama, rawJinja] = await Promise.all([
             d3.csv('data/kamisama_master.csv'),
             d3.csv('data/jinja_master.csv')
         ]);
-        console.log(`データ読み込み完了: 神さま ${kamisamaData.length}柱, 神社 ${jinjaData.length}社`);
+
+        // ★キー名（BOM等の\ufeffや余白）を自動クレンジングしてグローバル代入
+        window.kamisamaData = rawKamisama.map(item => sanitizeObjectKeys(item));
+        window.jinjaData = rawJinja.map(item => sanitizeObjectKeys(item));
+
+        console.log(`データ読み込み完了: 神さま ${window.kamisamaData.length}柱, 神社 ${window.jinjaData.length}社`);
     } catch (e) {
         console.error('データの読み込みに失敗しました:', e);
         initMap();
@@ -38,21 +43,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('--- 探訪マップ 初期化完了 ---');
 });
 
+// オブジェクトのキーに含まれるBOM(\ufeff)や余白を自動除去する関数
+function sanitizeObjectKeys(obj) {
+    const cleanObj = {};
+    Object.keys(obj).forEach(key => {
+        const cleanKey = key.replace(/^\uFEFF/, '').trim();
+        const value = obj[key];
+        cleanObj[cleanKey] = typeof value === 'string' ? value.trim() : value;
+    });
+    return cleanObj;
+}
+
 // ============================================================
 // 2. 地図の初期化 (Leaflet + OpenStreetMap)
 // ============================================================
 function initMap() {
     console.log('地図初期化 (OSM)');
-    map = L.map('map', {
+    window.map = L.map('map', {
         zoomControl: false,
         minZoom: 5, maxZoom: 18
     }).setView([35.6812, 139.7671], 6);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    }).addTo(window.map);
 
-    markersLayer = L.layerGroup().addTo(map);
+    window.markersLayer = L.layerGroup().addTo(window.map);
     console.log('地図初期化完了');
 }
 
@@ -60,7 +76,8 @@ function initMap() {
 // 3. ピン（荘厳神紋）の配置 & データ防御
 // ============================================================
 function renderMarkers() {
-    markersLayer.clearLayers();
+    if (!window.markersLayer) return;
+    window.markersLayer.clearLayers();
     const filteredJinja = filterData();
 
     filteredJinja.forEach(jinja => {
@@ -74,7 +91,7 @@ function renderMarkers() {
             return;
         }
 
-        const iconHtml = `<div class="jinja-icon-inner icon-${jinja.id.toLowerCase()}" data-jinja-id="${jinja.id}"></div>`;
+        const iconHtml = `<div class="jinja-icon-inner icon-${jinja.id ? jinja.id.toLowerCase() : ''}" data-jinja-id="${jinja.id}"></div>`;
         const icon = L.divIcon({
             className: 'jinja-marker',
             html: iconHtml,
@@ -83,28 +100,18 @@ function renderMarkers() {
 
         const marker = L.marker([lat, lng], { icon: icon, title: jinja.name });
         marker.on('click', () => selectJinja(jinja.id));
-        markersLayer.addLayer(marker);
+        window.markersLayer.addLayer(marker);
     });
 }
 
 // ============================================================
-// 4. 安全なデータ取得 & 詳細パネル描画
+// 4. 詳細パネル描画 & 神さまリンク生成
 // ============================================================
-
-// ★BOM（\ufeffid等）やキー名ズレを吸収して神さまIDを確定取得する関数
-function getKamisamaId(k) {
-    if (!k) return '';
-    if (k.id) return String(k.id).trim();
-    // idキーが存在しない場合、オブジェクトの先頭要素を取得
-    const firstKey = Object.keys(k)[0];
-    return (firstKey && k[firstKey]) ? String(k[firstKey]).trim() : '';
-}
-
 function showDetailPanel(jinja) {
     const detailContent = document.getElementById('detail-content');
     
     detailContent.innerHTML = `
-        <h2>${jinja.name}</h2>
+        <h2>${jinja.name || ''}</h2>
         <p class="yomi">(${jinja.yomi || ''})</p>
         <div class="shrine-meta">
             <span>旧社格: ${jinja.former_shrine_rank || '―'}</span> / 
@@ -123,26 +130,27 @@ function showDetailPanel(jinja) {
         <p class="description" style="margin: 10px 0; font-size: 0.9em; line-height: 1.5;">${jinja.description || ''}</p>
 
         <div class="action-btn-wrapper" style="margin-top: 20px; text-align: center;">
-            <a href="${jinja.gmap_url}" target="_blank" class="jinja-btn nav-btn" style="display: block; width: 100%; box-sizing: border-box; text-decoration: none;">🗺 Google Mapsで開く（ナビ起動）</a>
+            <a href="${jinja.gmap_url || '#'}" target="_blank" class="jinja-btn nav-btn" style="display: block; width: 100%; box-sizing: border-box; text-decoration: none;">🗺 Google Mapsで開く（ナビ起動）</a>
         </div>
     `;
 
     document.getElementById('detail-panel').classList.add('open');
-    map.flyTo([jinja.lat, jinja.lng], 13);
+    if (window.map) {
+        window.map.flyTo([jinja.lat, jinja.lng], 13);
+    }
 }
 
 function renderGodLinks(godIds) {
     if (!godIds || typeof godIds !== 'string') return '（不詳）';
 
-    // カンマ、縦棒、読点等で分割
+    // カンマ、縦棒、読点、スペース等で分割
     const rawIds = godIds.split(/[,|、\s]+/).map(id => id.trim()).filter(id => id.length > 0);
 
     const matchedLinks = rawIds.map(targetId => {
-        // getKamisamaId(k) を用いてBOM影響を無効化して安全照合
-        const kamisama = kamisamaData.find(k => getKamisamaId(k) === targetId);
+        // クレンジング済みの window.kamisamaData から照合
+        const kamisama = window.kamisamaData.find(k => k.id === targetId);
         if (kamisama) {
-            const safeId = getKamisamaId(kamisama);
-            return `<span class="god-link" onclick="openGodTree('${safeId}')" style="cursor: pointer; text-decoration: underline; color: #d4af37; font-weight: bold; margin-right: 4px;">${kamisama.name}</span>`;
+            return `<span class="god-link" onclick="openGodTree('${kamisama.id}')" style="cursor: pointer; text-decoration: underline; color: #d4af37; font-weight: bold; margin-right: 4px;">${kamisama.name}</span>`;
         }
         return null;
     }).filter(link => link !== null);
@@ -163,14 +171,15 @@ function openGodTree(kamisamaId) {
 // ============================================================
 function renderJinjaList() {
     const listEl = document.getElementById('jinja-list');
+    if (!listEl) return;
     listEl.innerHTML = '';
     const filteredJinja = filterData();
     filteredJinja.forEach(jinja => {
         const li = document.createElement('li');
         li.dataset.jinjaId = jinja.id;
         li.innerHTML = `
-            <div class="list-shrine-name">${jinja.name}</div>
-            <div class="list-shrine-meta">${jinja.yomi} / ${jinja.province}國</div>
+            <div class="list-shrine-name">${jinja.name || ''}</div>
+            <div class="list-shrine-meta">${jinja.yomi || ''} / ${jinja.province || ''}國</div>
         `;
         li.addEventListener('click', () => selectJinja(jinja.id));
         listEl.appendChild(li);
@@ -178,11 +187,12 @@ function renderJinjaList() {
 }
 
 function filterData() {
-    return jinjaData.filter(jinja => {
+    if (!window.jinjaData) return [];
+    return window.jinjaData.filter(jinja => {
         const searchMatch = !currentFilters.search || 
-            jinja.name.includes(currentFilters.search) ||
-            jinja.yomi.includes(currentFilters.search) ||
-            jinja.address.includes(currentFilters.search);
+            (jinja.name && jinja.name.includes(currentFilters.search)) ||
+            (jinja.yomi && jinja.yomi.includes(currentFilters.search)) ||
+            (jinja.address && jinja.address.includes(currentFilters.search));
         const shikinaishaMatch = currentFilters.shikinaisha === 'all' ||
             jinja.shikinaisha_type === currentFilters.shikinaisha;
         const godSystemMatch = true;
@@ -191,7 +201,8 @@ function filterData() {
 }
 
 function selectJinja(jinjaId) {
-    const jinja = jinjaData.find(j => j.id === jinjaId);
+    if (!window.jinjaData) return;
+    const jinja = window.jinjaData.find(j => j.id === jinjaId);
     if (!jinja) return;
     document.querySelectorAll('#jinja-list li').forEach(li => li.classList.remove('selected'));
     const li = document.querySelector(`#jinja-list li[data-jinja-id="${jinjaId}"]`);
@@ -200,17 +211,28 @@ function selectJinja(jinjaId) {
 }
 
 function initEventListeners() {
-    document.getElementById('jinja-search').addEventListener('input', (e) => {
-        currentFilters.search = e.target.value;
-        renderMarkers();
-        renderJinjaList();
-    });
-    document.getElementById('sidebar-toggle').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-    });
-    document.getElementById('detail-close').addEventListener('click', () => {
-        document.getElementById('detail-panel').classList.remove('open');
-    });
+    const searchEl = document.getElementById('jinja-search');
+    if (searchEl) {
+        searchEl.addEventListener('input', (e) => {
+            currentFilters.search = e.target.value;
+            renderMarkers();
+            renderJinjaList();
+        });
+    }
+
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        });
+    }
+
+    const closeBtn = document.getElementById('detail-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('detail-panel').classList.remove('open');
+        });
+    }
     
     const modalCloseBtn = document.getElementById('modal-close');
     if (modalCloseBtn && typeof hideTreeModal === 'function') {

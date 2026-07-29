@@ -106,7 +106,7 @@ header.main-header h1 .torii {
 }
 
 /* ------------------------------------------------------------
-   5. ピン（神紋ピンのデザインは維持）
+   5. ピン（荘厳神紋・可視化対応）
    ------------------------------------------------------------ */
 .jinja-marker {
   background: none;
@@ -114,13 +114,43 @@ header.main-header h1 .torii {
 }
 
 .jinja-icon-inner {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--bg-lacquer, #0a0a0a);
+  border: 2px solid var(--gold-main, #d4af37);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.8), 0 2px 6px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   background-size: contain;
   background-repeat: no-repeat;
-  /* 御神火の光 */
-  filter: drop-shadow(0 0 5px var(--gold-main));
+  background-position: center;
 }
+
+/* ホバー・選択時の強調 */
+.jinja-icon-inner:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 12px #ffffff, 0 0 15px var(--gold-main, #d4af37);
+  z-index: 1000;
+}
+
+/* 画像が設定されていない場合のデフォルト表示（朱色の鳥居） */
+.jinja-icon-inner::after {
+  content: "⛩";
+  font-size: 16px;
+  line-height: 1;
+  color: var(--torii-red, #b30000);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+/* 個別画像が適用されている場合は文字を非表示にする設定 */
+.jinja-icon-inner[style*="background-image"]::after {
+  content: "";
+}
+
 
 /* ------------------------------------------------------------
    6. 左サイドバー (和紙質感・可動式)

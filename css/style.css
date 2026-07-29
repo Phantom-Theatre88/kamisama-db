@@ -1,13 +1,13 @@
 /* ============================================================
    八百万の神々 神社探訪マップ ＆ 神さま台帳 
-   真・完全統合スタイルシート（荘厳和風デザイン）
+   真・完全統合スタイルシート（莊嚴和風デザイン）
    ============================================================ */
 
 /* ------------------------------------------------------------
    1. 共通変数設定 (和の伝統色)
    ------------------------------------------------------------ */
 :root {
-  /* 荘厳ベースカラー */
+  /* 莊嚴ベースカラー */
   --bg-lacquer: #0a0a0a;         /* 漆黒 */
   --bg-washi: #f0e6cc;           /* 和紙・生成り色 */
   --text-dark: #1a1a1a;          /* 墨 */
@@ -106,7 +106,7 @@ header.main-header h1 .torii {
 }
 
 /* ------------------------------------------------------------
-   5. ピン（荘厳神紋）
+   5. ピン（神紋ピンのデザインは維持）
    ------------------------------------------------------------ */
 .jinja-marker {
   background: none;
@@ -123,7 +123,7 @@ header.main-header h1 .torii {
 }
 
 /* ------------------------------------------------------------
-   6. 左サイドバー (和紙質感・漆黒ベース)
+   6. 左サイドバー (和紙質感・可動式)
    ------------------------------------------------------------ */
 #sidebar {
   position: absolute;
@@ -144,7 +144,7 @@ header.main-header h1 .torii {
   overflow: hidden; /* 団子状態防止 */
 }
 
-/* サイドバーが隠れた状態 (iPad対応) */
+/* サイドバーが隠れた状態 */
 #sidebar.collapsed {
   left: -310px;
 }
@@ -183,7 +183,7 @@ header.main-header h1 .torii {
 }
 
 /* ------------------------------------------------------------
-   7. 【核心】神さまリスト（提示CSSを和様式に昇華）
+   7. 神社リスト（提示CSSを和風デザインに統合）
    ------------------------------------------------------------ */
 .jinja-list-container {
   flex: 1; /* 残りの高さをすべて使う */
@@ -199,7 +199,7 @@ header.main-header h1 .torii {
   padding-right: 5px;
 }
 
-/* 神社リストアイテム（提示CSSの god-card 系統別色分けを維持） */
+/* 神社リストアイテム（ID表示なし） */
 #jinja-list li {
   padding: 12px;
   border-bottom: 1px solid #ddd;
@@ -208,7 +208,6 @@ header.main-header h1 .torii {
   border-radius: 5px;
   margin-bottom: 8px;
   transition: all 0.2s;
-  /* 提示CSSの明朝体維持 */
   font-family: "Hiragino Mincho ProN", serif;
 }
 
@@ -221,7 +220,6 @@ header.main-header h1 .torii {
 #jinja-list li.selected {
   background: rgba(212, 175, 55, 0.2);
   border-left: 5px solid var(--gold-main);
-  outline: none; /* 提示CSSのoutlineを和に変更 */
 }
 
 #jinja-list li .list-shrine-name {
@@ -236,7 +234,7 @@ header.main-header h1 .torii {
 }
 
 /* ------------------------------------------------------------
-   8. 詳細パネル (和紙風・下からポップアップ)
+   8. 詳細パネル (和紙風・ポップアップ)
    ------------------------------------------------------------ */
 #detail-panel {
   position: absolute;
@@ -267,7 +265,7 @@ header.main-header h1 .torii {
   color: var(--text-dark);
 }
 
-/* 社名見出し（提示詳細CSSを統合） */
+/* 社名見出し */
 #detail-content h2 {
   font-size: 1.6rem;
   border-bottom: 2px solid var(--gold-dim);
@@ -275,15 +273,9 @@ header.main-header h1 .torii {
   margin-bottom: 12px;
 }
 
-/* 神さまへの黄金リンク */
-.god-link {
-  color: #8c2d19; /* 朱色 */
-  text-decoration: underline;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-/* ボタン (沈金細工風) */
+/* ------------------------------------------------------------
+   9. 汎用スタイル・ボタン
+   ------------------------------------------------------------ */
 .jinja-btn {
   background-color: var(--bg-lacquer);
   color: var(--gold-main);
@@ -298,4 +290,15 @@ header.main-header h1 .torii {
 .jinja-btn:hover {
   background-color: #000;
   box-shadow: 0 0 10px var(--gold-main);
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
 }

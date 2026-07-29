@@ -16,32 +16,60 @@
 </head>
 <body class="map-mode">
     
-    <!-- ヘッダー (漆黒・黄金) -->
+    <!-- ヘッダー (漆黒・黄金 & ナビゲーション) -->
     <header class="main-header">
-        <h1><span class="torii">⛩</span> 八百万の神々 神社＆神々探訪マップ</h1>
+        <h1><span class="torii">⛩</span> 八百万の神々</h1>
+        
+        <!-- 画面切り替えタブ -->
+        <nav class="header-nav">
+            <button class="nav-tab active" data-view="map-view">🗺 神社マップ</button>
+            <button class="nav-tab" data-view="god-view">📜 神さま図鑑</button>
+            <button class="nav-tab" data-view="log-view">📖 参拝ログ</button>
+        </nav>
+
         <div class="header-search">
             <input type="text" id="jinja-search" placeholder="🔍 社名・祭神・地域で検索...">
         </div>
     </header>
 
-    <!-- メイン領域：地図 (OpenStreetMap) -->
-    <main id="map"></main>
+    <!-- 1. 神社マップビュー -->
+    <div id="map-view" class="view-section active">
+        <main id="map"></main>
 
-    <!-- 左サイドバー (和紙質感・可動式) -->
-    <div id="sidebar" class="washi-texture collapsable">
-        <button id="sidebar-toggle" class="jinja-btn">⛩ 絞り込み</button>
-        <div class="sidebar-content">
-            <div class="jinja-list-container">
-                <h3>神社一覧</h3>
-                <ul id="jinja-list"></ul>
+        <!-- 左サイドバー (和紙質感・可動式) -->
+        <div id="sidebar" class="washi-texture collapsable">
+            <button id="sidebar-toggle" class="jinja-btn">⛩ 絞り込み</button>
+            <div class="sidebar-content">
+                <div class="jinja-list-container">
+                    <h3>神社一覧</h3>
+                    <ul id="jinja-list"></ul>
+                </div>
             </div>
+        </div>
+
+        <!-- 詳細パネル (下からポップアップ) -->
+        <div id="detail-panel" class="washi-texture popup">
+            <button id="detail-close" class="close-btn">×</button>
+            <div id="detail-content"></div>
         </div>
     </div>
 
-    <!-- 詳細パネル (下からポップアップ・ID非表示) -->
-    <div id="detail-panel" class="washi-texture popup">
-        <button id="detail-close" class="close-btn">×</button>
-        <div id="detail-content"></div>
+    <!-- 2. 神さま図鑑ビュー -->
+    <div id="god-view" class="view-section washi-texture">
+        <div class="view-container">
+            <h2>📜 八百万の神々 台帳</h2>
+            <p class="view-desc">日本神話に登場する神々の系統一覧です。</p>
+            <div id="god-list-grid" class="god-grid"></div>
+        </div>
+    </div>
+
+    <!-- 3. 参拝ログビュー (Step 5用土台) -->
+    <div id="log-view" class="view-section washi-texture">
+        <div class="view-container">
+            <h2>📖 参拝録</h2>
+            <p class="view-desc">あなたの神社巡りの記録です。</p>
+            <div id="log-list-container"></div>
+        </div>
     </div>
 
     <!-- FamilyTreeモーダル -->
@@ -52,12 +80,11 @@
         </div>
     </div>
 
-    <!-- ライブラリとスクリプトの読み込み（キャッシュ対策バージョン付与） -->
+    <!-- ライブラリとスクリプトの読み込み -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     
-    <!-- js/ フォルダ配下を明示的に指定 -->
-    <script src="js/tree.js?v=20260729_03"></script>
-    <script src="js/app.js?v=20260729_03"></script>
+    <script src="js/tree.js?v=20260729_04"></script>
+    <script src="js/app.js?v=20260729_04"></script>
 </body>
 </html>

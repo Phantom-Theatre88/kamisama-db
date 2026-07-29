@@ -1,257 +1,90 @@
-// ============================================================
-// 八百万の神々 神社探訪マップ ＆ 神さま台帳
-// Step 3: 完全データ連携＆相関図(tree.js)結合プログラム
-// ============================================================
-
-// --- グローバル変数 ---
-window.map = null;            // Leaflet 地図オブジェクト
-window.jinjaData = [];        // 神社データ (配列)
-window.kamisamaData = [];     // 神さまデータ (配列)
-window.kamisamaMap = new Map(); // 神さまデータ高速検索用マップ (ID -> オブジェクト)
-window.markersLayer = null;   // 地図ピンレイヤー
-
-// フィルター初期値
-let currentFilters = { search: '', shikinaisha: 'all' };
-
-// ============================================================
-// 1. 初期化処理 (ページ読み込み時に実行)
-// ============================================================
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('--- 探訪マップ (Step 3) 初期化開始 ---');
-
-    try {
-        const [rawKamisama, rawJinja] = await Promise.all([
-            d3.csv('data/kamisama_master.csv'),
-            d3.csv('data/jinja_master.csv')
-        ]);
-
-        // キーの余白・BOMをクレンジングして保持
-        window.kamisamaData = rawKamisama.map(item => sanitizeObjectKeys(item));
-        window.jinjaData = rawJinja.map(item => sanitizeObjectKeys(item));
-
-        // 高速検索用 Map の作成 (IDをキーにする)
-        window.kamisamaMap.clear();
-        window.kamisamaData.forEach(k => {
-            if (k.id) {
-                window.kamisamaMap.set(k.id, k);
-            }
-        });
-
-        console.log(`データ読み込み成功: 神さま ${window.kamisamaData.length}柱, 神社 ${window.jinjaData.length}社`);
-    } catch (e) {
-        console.error('CSVデータの読み込みに失敗しました:', e);
-        initMap();
-        return;
-    }
-
-    initMap();
-    renderMarkers();
-    renderJinjaList();
-    initEventListeners();
-
-    console.log('--- 探訪マップ (Step 3) 初期化完了 ---');
-});
-
-// オブジェクトキーのBOM(\ufeff)や余白を自動クレンジングする関数
-function sanitizeObjectKeys(obj) {
-    const cleanObj = {};
-    Object.keys(obj).forEach(key => {
-        const cleanKey = key.replace(/^\uFEFF/, '').trim();
-        const value = obj[key];
-        cleanObj[cleanKey] = typeof value === 'string' ? value.trim() : value;
-    });
-    return cleanObj;
-}
-
-// ============================================================
-// 2. 地図の初期化 (Leaflet + OpenStreetMap)
-// ============================================================
-function initMap() {
-    window.map = L.map('map', {
-        zoomControl: false,
-        minZoom: 5, maxZoom: 18
-    }).setView([35.6812, 139.7671], 6);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(window.map);
-
-    window.markersLayer = L.layerGroup().addTo(window.map);
-}
-
-// ============================================================
-// 3. ピンの配置 & クリックイベント設定
-// ============================================================
-function renderMarkers() {
-    if (!window.markersLayer) return;
-    window.markersLayer.clearLayers();
-    const filteredJinja = filterData();
-
-    filteredJinja.forEach(jinja => {
-        const lat = parseFloat(jinja.lat);
-        const lng = parseFloat(jinja.lng);
-
-        if (isNaN(lat) || isNaN(lng)) return;
-
-        const iconHtml = `<div class="jinja-icon-inner icon-${jinja.id ? jinja.id.toLowerCase() : ''}" data-jinja-id="${jinja.id}"></div>`;
-        const icon = L.divIcon({
-            className: 'jinja-marker',
-            html: iconHtml,
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-        });
-
-        const marker = L.marker([lat, lng], { icon: icon, title: jinja.name });
-        marker.on('click', () => selectJinja(jinja.id));
-        window.markersLayer.addLayer(marker);
-    });
-}
-
-// ============================================================
-// 4. 詳細パネル描画 & 相関図(tree.js)完全連動
-// ============================================================
-function showDetailPanel(jinja) {
-    const detailContent = document.getElementById('detail-content');
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>八百万の神々 神社＆神々探訪マップ - 荘厳UI版 -</title>
     
-    detailContent.innerHTML = `
-        <h2>${jinja.name || ''}</h2>
-        <p class="yomi">(${jinja.yomi || ''})</p>
-        <div class="shrine-meta">
-            <span>旧社格: ${jinja.former_shrine_rank || '―'}</span> / 
-            <span>${jinja.shikinaisha_type || '―'}</span> / 
-            <span>${jinja.province || ''}國 ${jinja.county || ''}郡</span>
-        </div>
-        <p class="address">所在地: ${jinja.address || '―'}</p>
+    <!-- Google Fonts (Noto Serif JP) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet.js (地図ライブラリ) CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- 独自のスタイル -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="map-mode">
+    
+    <!-- ヘッダー (漆黒・黄金 & ナビゲーション) -->
+    <header class="main-header">
+        <h1><span class="torii">⛩</span> 八百万の神々</h1>
         
-        <div class="god-section">
-            <h3 style="margin-bottom: 6px; font-size: 0.95rem; font-weight: bold;">主祭神</h3>
-            <div id="main-gods" class="god-list-container" style="line-height: 1.6;">
-                ${renderGodLinks(jinja.main_god_ids)}
+        <!-- 画面切り替えタブ -->
+        <nav class="header-nav">
+            <button class="nav-tab active" data-view="map-view">🗺 神社マップ</button>
+            <button class="nav-tab" data-view="god-view">📜 神さま図鑑</button>
+            <button class="nav-tab" data-view="log-view">📖 参拝ログ</button>
+        </nav>
+
+        <div class="header-search">
+            <input type="text" id="jinja-search" placeholder="🔍 社名・祭神・地域で検索...">
+        </div>
+    </header>
+
+    <!-- 1. 神社マップビュー -->
+    <div id="map-view" class="view-section active">
+        <main id="map"></main>
+
+        <!-- 左サイドバー (和紙質感・可動式) -->
+        <div id="sidebar" class="washi-texture collapsable">
+            <button id="sidebar-toggle" class="jinja-btn">⛩ 絞り込み</button>
+            <div class="sidebar-content">
+                <div class="jinja-list-container">
+                    <h3>神社一覧</h3>
+                    <ul id="jinja-list"></ul>
+                </div>
             </div>
         </div>
 
-        <p class="description" style="margin: 12px 0; font-size: 0.85rem; line-height: 1.6;">${jinja.description || ''}</p>
-
-        <div class="action-btn-wrapper">
-            <a href="${jinja.gmap_url || '#'}" target="_blank" class="jinja-btn nav-btn">🗺 Google Mapsで開く（ナビ起動）</a>
+        <!-- 詳細パネル (下からポップアップ) -->
+        <div id="detail-panel" class="washi-texture popup">
+            <button id="detail-close" class="close-btn">×</button>
+            <div id="detail-content"></div>
         </div>
-    `;
+    </div>
 
-    document.getElementById('detail-panel').classList.add('open');
-    if (window.map) {
-        window.map.flyTo([jinja.lat, jinja.lng], 13);
-    }
-}
+    <!-- 2. 神さま図鑑ビュー -->
+    <div id="god-view" class="view-section washi-texture">
+        <div class="view-container">
+            <h2>📜 八百万の神々 台帳</h2>
+            <p class="view-desc">日本神話に登場する神々の系統一覧です。</p>
+            <div id="god-list-grid" class="god-grid"></div>
+        </div>
+    </div>
 
-// 神さまIDからゴールドリンク(クリックで相関図起動)を生成する関数
-function renderGodLinks(godIds) {
-    if (!godIds || typeof godIds !== 'string') return '（不詳）';
+    <!-- 3. 参拝ログビュー (Step 5用土台) -->
+    <div id="log-view" class="view-section washi-texture">
+        <div class="view-container">
+            <h2>📖 参拝録</h2>
+            <p class="view-desc">あなたの神社巡りの記録です。</p>
+            <div id="log-list-container"></div>
+        </div>
+    </div>
 
-    const rawIds = godIds.split(/[,|、\s]+/).map(id => id.trim()).filter(id => id.length > 0);
+    <!-- FamilyTreeモーダル -->
+    <div id="tree-modal" class="modal washi-texture">
+        <div class="modal-content">
+            <button id="modal-close" class="close-btn">×</button>
+            <div id="tree-container"></div>
+        </div>
+    </div>
 
-    const matchedLinks = rawIds.map(targetId => {
-        // Map から一発照合
-        const kamisama = window.kamisamaMap.get(targetId);
-        if (kamisama) {
-            return `<span class="god-link" onclick="openGodTree('${kamisama.id}')">${kamisama.name}</span>`;
-        }
-        return null;
-    }).filter(link => link !== null);
-
-    return matchedLinks.length > 0 ? matchedLinks.join('、') : '（不詳）';
-}
-
-// 祭神クリック時に tree.js のモーダルを立ち上げる関数
-function openGodTree(kamisamaId) {
-    console.log('▶ 相関図呼び出し: 神さまID', kamisamaId);
-    if (typeof showTreeModal === 'function') {
-        showTreeModal(kamisamaId); 
-    } else if (typeof renderFamilyTree === 'function') {
-        renderFamilyTree(kamisamaId);
-        const modal = document.getElementById('tree-modal');
-        if (modal) modal.classList.add('open');
-    } else {
-        console.error('FamilyTree表示関数が見つかりません。js/tree.js を確認してください。');
-    }
-}
-
-// ============================================================
-// 5. リスト・フィルター・イベント制御
-// ============================================================
-function renderJinjaList() {
-    const listEl = document.getElementById('jinja-list');
-    if (!listEl) return;
-    listEl.innerHTML = '';
-    const filteredJinja = filterData();
-
-    filteredJinja.forEach(jinja => {
-        const li = document.createElement('li');
-        li.dataset.jinjaId = jinja.id;
-        li.innerHTML = `
-            <div class="list-shrine-name">${jinja.name || ''}</div>
-            <div class="list-shrine-meta">${jinja.yomi || ''} / ${jinja.province || ''}國</div>
-        `;
-        li.addEventListener('click', () => selectJinja(jinja.id));
-        listEl.appendChild(li);
-    });
-}
-
-function filterData() {
-    if (!window.jinjaData) return [];
-    return window.jinjaData.filter(jinja => {
-        const searchMatch = !currentFilters.search || 
-            (jinja.name && jinja.name.includes(currentFilters.search)) ||
-            (jinja.yomi && jinja.yomi.includes(currentFilters.search)) ||
-            (jinja.address && jinja.address.includes(currentFilters.search));
-        return searchMatch;
-    });
-}
-
-function selectJinja(jinjaId) {
-    if (!window.jinjaData) return;
-    const jinja = window.jinjaData.find(j => j.id === jinjaId);
-    if (!jinja) return;
-
-    document.querySelectorAll('#jinja-list li').forEach(li => li.classList.remove('selected'));
-    const li = document.querySelector(`#jinja-list li[data-jinja-id="${jinjaId}"]`);
-    if (li) li.classList.add('selected');
-
-    showDetailPanel(jinja);
-}
-
-function initEventListeners() {
-    // 検索入力
-    const searchEl = document.getElementById('jinja-search');
-    if (searchEl) {
-        searchEl.addEventListener('input', (e) => {
-            currentFilters.search = e.target.value;
-            renderMarkers();
-            renderJinjaList();
-        });
-    }
-
-    // サイドバー開閉
-    const toggleBtn = document.getElementById('sidebar-toggle');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-        });
-    }
-
-    // 詳細パネル閉じるボタン
-    const closeBtn = document.getElementById('detail-close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            document.getElementById('detail-panel').classList.remove('open');
-        });
-    }
+    <!-- ライブラリとスクリプトの読み込み -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     
-    // モーダル閉じるボタン
-    const modalCloseBtn = document.getElementById('modal-close');
-    if (modalCloseBtn) {
-        modalCloseBtn.addEventListener('click', () => {
-            const modal = document.getElementById('tree-modal');
-            if (modal) modal.classList.remove('open');
-        });
-    }
-}
+    <script src="js/tree.js?v=20260729_02"></script>
+    <script src="js/app.js?v=20260729_02"></script>
+</body>
+</html>

@@ -147,14 +147,26 @@ function showDetailPanel(jinja) {
 
 function renderGodLinks(godIds) {
     if (!godIds) return '（不詳）';
-    const idArray = godIds.split('|');
-    return idArray.map(id => {
-        const kamisama = kamisamaData.find(k => k.id === id);
+
+    // カンマ、縦棒、読点等で分割し、空文字を除去
+    const idArray = godIds.split(/[,|、]/).map(id => id.trim()).filter(id => id.length > 0);
+
+    const matchedNames = idArray.map(id => {
+        // IDから数値のみを抜き出して照合（例: K032 と K0032 をともに 32 として照合）
+        const targetNum = parseInt(id.replace(/[^0-9]/g, ''), 10);
+
+        const kamisama = kamisamaData.find(k => {
+            const kNum = parseInt(k.id.replace(/[^0-9]/g, ''), 10);
+            return kNum === targetNum;
+        });
+
         if (kamisama) {
             return `<span class="god-link" onclick="openGodTree('${kamisama.id}')">${kamisama.name}</span>`;
         }
-        return '';
-    }).join('、');
+        return null;
+    }).filter(item => item !== null);
+
+    return matchedNames.length > 0 ? matchedNames.join('、') : '（不詳）';
 }
 
 function openGodTree(kamisamaId) {

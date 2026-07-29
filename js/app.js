@@ -1,6 +1,6 @@
 // ============================================================
 // 八百万の神々 神社探訪マップ ＆ 神さま台帳
-// 真・完全統合プログラム (OSM・不正データ防御・ID非表示・解析用)
+// 完全一本化プログラム (データ照合・レイアウト最適化版)
 // ============================================================
 
 // --- グローバル変数 ---
@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             d3.csv('data/jinja_master.csv')
         ]);
 
+        // キーのBOM(\ufeff)や余白を自動クレンジングしてグローバル保持
         window.kamisamaData = rawKamisama.map(item => sanitizeObjectKeys(item));
         window.jinjaData = rawJinja.map(item => sanitizeObjectKeys(item));
 
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('--- 探訪マップ 初期化完了 ---');
 });
 
+// オブジェクトキーのクレンジング関数
 function sanitizeObjectKeys(obj) {
     const cleanObj = {};
     Object.keys(obj).forEach(key => {
@@ -102,15 +104,10 @@ function renderMarkers() {
 }
 
 // ============================================================
-// 4. 詳細パネル描画 & 診断ログ出力
+// 4. 詳細パネル描画 & 神さまリンク生成 (一本化)
 // ============================================================
 function showDetailPanel(jinja) {
-    // 🔍 ★解析用診断ログ★
-    console.log('--- [診断開始] ---');
-    console.log('1. 選択された神社データ:', jinja);
-    console.log('2. 祭神ID(jinja.main_god_ids):', jinja ? jinja.main_god_ids : 'データなし');
-    console.log('3. 神さまマスター先頭データ:', window.kamisamaData ? window.kamisamaData[0] : 'データなし');
-    console.log('--- [診断終了] ---');
+    console.log('▶ showDetailPanel 実行:', jinja.name, 'main_god_ids:', jinja.main_god_ids);
 
     const detailContent = document.getElementById('detail-content');
     
@@ -147,9 +144,11 @@ function showDetailPanel(jinja) {
 function renderGodLinks(godIds) {
     if (!godIds || typeof godIds !== 'string') return '（不詳）';
 
+    // カンマ、縦棒、読点、スペース等で分割
     const rawIds = godIds.split(/[,|、\s]+/).map(id => id.trim()).filter(id => id.length > 0);
 
     const matchedLinks = rawIds.map(targetId => {
+        // クレンジング済みの window.kamisamaData から完全一致検索
         const kamisama = window.kamisamaData.find(k => k.id === targetId);
         if (kamisama) {
             return `<span class="god-link" onclick="openGodTree('${kamisama.id}')" style="cursor: pointer; text-decoration: underline; color: #d4af37; font-weight: bold; margin-right: 4px;">${kamisama.name}</span>`;

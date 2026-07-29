@@ -335,8 +335,9 @@ body {
 .god-link:hover {
     color: #8c1d1d;
 }
+
 /* ============================================================
-   神社ピン（マーカー）表示用スタイル
+   神社ピン（マーカー）表示用スタイル (視認性重視版)
    ============================================================ */
 
 /* マーカーの基本外枠 */
@@ -345,31 +346,39 @@ body {
     border: none;
 }
 
-/* マーカーの丸型デザイン */
+/* マーカーの丸型デザイン（黄金ベース＋くっきり黒枠） */
 .jinja-icon-inner {
     width: 32px;
     height: 32px;
-    background-color: #1a1a1a;
-    border: 2px solid #d4af37;
+    background-color: #f4efd3; /* 明るい生成り色 */
+    border: 2px solid #8c1d1d;  /* 朱色枠 */
     border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-/* マーカー内の鳥居絵文字 */
+/* マーカー内の鳥居絵文字（鮮やかな朱色＋クッキリ影） */
 .jinja-icon-inner::after {
     content: "⛩";
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1;
+    color: #e60012; /* 鮮やかな鳥居の赤 */
+    text-shadow: 0px 0px 2px #ffffff; /* 白縁取り効果で視認性向上 */
 }
 
-/* ホバー時の拡大アニメーション */
+/* ホバー時の強調 */
 .jinja-icon-inner:hover {
-    transform: scale(1.2);
-    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.6);
-    background-color: #8c1d1d;
+    transform: scale(1.25);
+    background-color: #8c1d1d; /* 朱色に反転 */
+    border-color: #d4af37;     /* 枠線をゴールドに */
+    box-shadow: 0 4px 12px rgba(140, 29, 29, 0.6);
+}
+
+.jinja-icon-inner:hover::after {
+    color: #ffffff; /* ホバー時は鳥居を白に変化 */
+    text-shadow: none;
 }

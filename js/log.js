@@ -365,10 +365,4 @@
             el.disabled = true;
         });
     }
-
-    window.addEventListener('pagehide', () => {
-        revokeRenderedUrls();
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        if (db) db.close();
-    });
 })();

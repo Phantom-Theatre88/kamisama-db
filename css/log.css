@@ -62,7 +62,7 @@
     white-space: nowrap;
 }
 
-.view-desc {
+#log-view .view-desc {
     margin: 7px 0 18px;
     color: #665f50;
     font-size: 0.86rem;
@@ -354,42 +354,6 @@ body.log-modal-open {
 }
 
 @media (max-width: 820px) {
-    body {
-        overflow: auto;
-    }
-
-    .main-header {
-        height: auto;
-        min-height: 54px;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 8px 10px;
-    }
-
-    .main-header h1 {
-        font-size: 1rem;
-    }
-
-    .header-nav {
-        order: 3;
-        width: 100%;
-    }
-
-    .nav-tab {
-        flex: 1;
-        padding: 7px 4px;
-        font-size: 0.74rem;
-    }
-
-    .header-search {
-        display: none;
-    }
-
-    .view-section {
-        height: auto;
-        min-height: calc(100vh - 96px);
-    }
-
     .log-layout {
         width: min(100% - 20px, 680px);
         grid-template-columns: 1fr;

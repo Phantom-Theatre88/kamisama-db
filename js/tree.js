@@ -32,12 +32,12 @@ function showTreeModal(kamisamaId) {
         
         <!-- 【TODO】 ここにD3.jsによる FamilyTree(系統図)の描画が入ります -->
         <div class="tree-graph">
-            <p class="placeholder-text"> FamilyTree(系統図)は現在準備中です。 </p>
+            <p class="placeholder-text" style="color:#5a5145;"> FamilyTree(系統図)は現在準備中です。 </p>
         </div>
         
         <!-- 【TODO】 この神様を祀る神社一覧へのジャンプボタン（連携強化） -->
         <div class="shrine-links">
-            <button class="jinja-btn washi-texture" onclick="jumpToShrines('${kamisamaId}')">
+            <button class="jinja-btn" onclick="jumpToShrines('${kamisamaId}')">
                 ⛩ この神様を祀る神社一覧
             </button>
         </div>

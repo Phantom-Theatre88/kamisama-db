@@ -9,10 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Leaflet.js CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJB9wIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <!-- 独自のスタイル -->
     <link rel="stylesheet" href="css/style.css?v=20260730_99">
+    <link rel="stylesheet" href="css/log.css?v=20260827_step1">
 </head>
 <body class="map-mode">
     
@@ -96,10 +97,58 @@
 
     <!-- 3. 参拝ログビュー -->
     <div id="log-view" class="view-section washi-texture">
-        <div class="view-container">
-            <h2>📖 参拝録</h2>
-            <p class="view-desc">あなたの神社巡りの記録です。</p>
-            <div id="log-list-container"></div>
+        <div class="log-layout">
+            <section class="visit-entry-panel">
+                <div class="log-title-row">
+                    <h2>📖 参拝録</h2>
+                </div>
+                <p class="view-desc">参拝日・メモ・御朱印写真を端末内へ保存します。</p>
+
+                <form id="visit-form">
+                    <div class="log-form-field">
+                        <label for="visit-date">参拝日<span class="log-required">必須</span></label>
+                        <input type="date" id="visit-date" required>
+                    </div>
+
+                    <div class="log-form-field">
+                        <label for="visit-memo">メモ</label>
+                        <textarea id="visit-memo" rows="5" placeholder="参拝した時のこと、御朱印のことなど"></textarea>
+                    </div>
+
+                    <div class="log-form-field">
+                        <span class="log-field-label">御朱印写真<span class="log-required">必須</span></span>
+                        <div class="photo-picker-box">
+                            <input type="file" id="goshuin-photo" accept="image/*">
+                            <div class="photo-preview-wrap">
+                                <img id="photo-preview" alt="選択した御朱印写真" hidden>
+                                <button type="button" id="photo-clear" hidden>写真を選び直す</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="visit-save" class="jinja-btn">この参拝記録を保存</button>
+                    <p id="log-save-status" aria-live="polite"></p>
+                </form>
+            </section>
+
+            <section class="visit-list-panel">
+                <div class="log-list-heading">
+                    <h3>保存した参拝記録</h3>
+                    <span id="log-count">0件</span>
+                </div>
+                <div id="log-list-container"></div>
+            </section>
+        </div>
+    </div>
+
+    <!-- 参拝ログ詳細モーダル -->
+    <div id="log-detail-modal" class="log-detail-modal" hidden>
+        <div class="log-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="log-detail-date">
+            <button id="log-detail-close" class="close-btn" type="button" aria-label="閉じる">×</button>
+            <h2 id="log-detail-date"></h2>
+            <img id="log-detail-image" alt="御朱印写真" hidden>
+            <div class="log-detail-memo-label">メモ</div>
+            <p id="log-detail-memo"></p>
         </div>
     </div>
 
@@ -117,5 +166,6 @@
     
     <script src="js/tree.js?v=20260730_99"></script>
     <script src="js/app.js?v=20260730_99"></script>
+    <script src="js/log.js?v=20260827_step1"></script>
 </body>
 </html>

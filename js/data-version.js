@@ -3,7 +3,7 @@
     'use strict';
     if (!window.d3 || typeof window.d3.csv !== 'function') return;
 
-    const DATA_VERSION = '20260828_14';
+    const DATA_VERSION = '20260828_15';
     const originalCsv = window.d3.csv.bind(window.d3);
 
     window.d3.csv = function(input, ...args) {

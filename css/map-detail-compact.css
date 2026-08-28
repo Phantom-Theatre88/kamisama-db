@@ -1,0 +1,236 @@
+/* ============================================================
+   神社マップ：コンパクト詳細カード
+   地図を主役にし、神社詳細は右下の小カードとして表示する
+   ============================================================ */
+
+/* 左の神社一覧を少し細く・軽く */
+#sidebar {
+    top: 14px;
+    left: 14px;
+    width: 240px;
+    max-height: calc(100% - 28px);
+    border-radius: 9px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+}
+
+#sidebar.collapsed {
+    transform: translateX(-250px);
+}
+
+.sidebar-content {
+    padding: 12px;
+}
+
+#jinja-list li {
+    padding: 8px 9px;
+    margin-bottom: 6px;
+}
+
+.list-shrine-name {
+    font-size: 0.9rem;
+}
+
+.list-shrine-meta {
+    font-size: 0.7rem;
+}
+
+#sidebar-toggle {
+    right: -38px;
+    padding: 9px 3px;
+}
+
+/* 下中央の大パネルから、右下の小カードへ */
+#detail-panel {
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    left: auto;
+    transform: translateY(12px);
+    width: min(360px, calc(100% - 32px));
+    max-width: none;
+    max-height: calc(100% - 32px);
+    padding: 15px 16px 14px;
+    border: 1px solid #bda66b;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+    overflow-y: auto;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+#detail-panel.open {
+    bottom: 16px;
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#detail-panel .close-btn {
+    top: 8px;
+    right: 9px;
+    width: 28px;
+    height: 28px;
+    font-size: 1.15rem;
+}
+
+#detail-content.map-detail-compact-content {
+    padding-right: 18px;
+}
+
+#detail-content.map-detail-compact-content > h2 {
+    margin: 0 30px 1px 0;
+    color: #3b2c1d;
+    font-size: 1.28rem;
+    line-height: 1.35;
+}
+
+#detail-content.map-detail-compact-content > .yomi {
+    margin: 0 0 8px;
+    color: #75684f;
+    font-size: 0.72rem;
+}
+
+#detail-content.map-detail-compact-content > .address {
+    margin: 0 0 9px;
+    color: #574e40;
+    font-size: 0.76rem;
+    line-height: 1.5;
+}
+
+#detail-content.map-detail-compact-content .god-section {
+    margin: 7px 0 8px;
+    padding: 8px 9px;
+    border-radius: 7px;
+    background: rgba(244,239,211,0.6);
+    border: 1px solid rgba(194,177,128,0.55);
+}
+
+#detail-content.map-detail-compact-content .god-section h3 {
+    margin: 0 0 3px !important;
+    color: #806c43;
+    font-size: 0.68rem !important;
+    font-weight: 700;
+}
+
+#detail-content.map-detail-compact-content .god-list-container {
+    line-height: 1.45 !important;
+    font-size: 0.82rem;
+}
+
+.map-visit-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 8px;
+    margin: 7px 0 8px;
+    padding: 7px 9px;
+    border-radius: 7px;
+    background: rgba(255,255,255,0.62);
+    border: 1px solid rgba(194,177,128,0.62);
+    color: #5f5542;
+    font-size: 0.72rem;
+    line-height: 1.45;
+}
+
+.map-visit-summary.is-visited {
+    border-color: rgba(212,175,55,0.8);
+    background: rgba(255,248,220,0.9);
+}
+
+.map-visit-summary .map-visit-count {
+    color: #74580b;
+    font-weight: 700;
+}
+
+.map-visit-summary .map-visit-latest {
+    color: #716550;
+}
+
+.map-detail-more {
+    margin: 8px 0 10px;
+    border-top: 1px solid rgba(194,177,128,0.55);
+    border-bottom: 1px solid rgba(194,177,128,0.55);
+}
+
+.map-detail-more > summary {
+    padding: 8px 2px;
+    color: #806c43;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style-position: inside;
+}
+
+.map-detail-more-body {
+    padding: 0 2px 9px;
+}
+
+.map-detail-more-body .shrine-meta,
+.map-detail-more-body .description {
+    margin: 6px 0 !important;
+    color: #5c5446;
+    font-size: 0.74rem !important;
+    line-height: 1.55 !important;
+}
+
+#detail-content.map-detail-compact-content .action-btn-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-top: 9px;
+}
+
+#detail-content.map-detail-compact-content .action-btn-wrapper .jinja-btn,
+#detail-content.map-detail-compact-content .action-btn-wrapper .nav-btn {
+    width: 100%;
+    min-height: 36px;
+    margin: 0;
+    padding: 7px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.7rem;
+    line-height: 1.35;
+    border-radius: 6px;
+}
+
+@media (max-width: 760px) {
+    #sidebar {
+        width: 220px;
+    }
+
+    #sidebar.collapsed {
+        transform: translateX(-230px);
+    }
+
+    #detail-panel {
+        right: 10px;
+        bottom: 10px;
+        width: min(350px, calc(100% - 20px));
+        max-height: 55%;
+    }
+
+    #detail-panel.open {
+        bottom: 10px;
+    }
+}
+
+@media (max-width: 520px) {
+    #detail-panel {
+        right: 8px;
+        bottom: 8px;
+        width: calc(100% - 16px);
+        max-height: 58%;
+        padding: 13px 14px 12px;
+    }
+
+    #detail-panel.open {
+        bottom: 8px;
+    }
+
+    #detail-content.map-detail-compact-content .action-btn-wrapper {
+        grid-template-columns: 1fr;
+    }
+}

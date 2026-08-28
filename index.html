@@ -12,9 +12,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <!-- 独自のスタイル -->
-    <link rel="stylesheet" href="css/style.css?v=20260828_03">
-    <link rel="stylesheet" href="css/log.css?v=20260828_03">
-    <link rel="stylesheet" href="css/log-shrine.css?v=20260828_03">
+    <link rel="stylesheet" href="css/style.css?v=20260828_04">
+    <link rel="stylesheet" href="css/log.css?v=20260828_04">
+    <link rel="stylesheet" href="css/log-shrine.css?v=20260828_04">
+    <link rel="stylesheet" href="css/log-sort.css?v=20260828_04">
 </head>
 <body class="map-mode">
     
@@ -145,6 +146,11 @@
                     <h3>保存した参拝記録</h3>
                     <span id="log-count">0件</span>
                 </div>
+                <div class="log-sort-controls" role="group" aria-label="参拝記録の表示順">
+                    <button type="button" class="log-sort-btn active" data-log-sort="date" aria-pressed="true">📅 日付順</button>
+                    <button type="button" class="log-sort-btn" data-log-sort="shrine" aria-pressed="false">⛩ 神社別</button>
+                    <button type="button" class="log-sort-btn" data-log-sort="god" aria-pressed="false">✨ 神さま別</button>
+                </div>
                 <div id="log-list-container"></div>
             </section>
         </div>
@@ -174,8 +180,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     
-    <script src="js/tree.js?v=20260828_03"></script>
-    <script src="js/app.js?v=20260828_03"></script>
-    <script src="js/log-v2.js?v=20260828_03"></script>
+    <script src="js/tree.js?v=20260828_04"></script>
+    <script src="js/app.js?v=20260828_04"></script>
+    <script src="js/log-v3.js?v=20260828_04"></script>
 </body>
 </html>

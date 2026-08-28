@@ -1,6 +1,7 @@
 // ============================================================
 // 現在地・周辺神社
 // 現在地を地図に表示し、神社一覧を近い順へ並べる
+// Safari / macOS向けに再試行と原因表示を強化
 // ============================================================
 
 (() => {
@@ -43,58 +44,118 @@
 
         search.addEventListener('input', () => {
             if (!nearbyMode || !currentLocation) return;
-            // app.js 側の通常描画の後に、距離順表示へ戻す。
             window.setTimeout(renderNearbyList, 0);
         });
     }
 
-    function findCurrentLocation() {
+    async function findCurrentLocation() {
         const button = document.getElementById('current-location-btn');
+
+        if (!window.isSecureContext) {
+            setStatus('現在地機能はHTTPS接続でのみ利用できます。', 'error');
+            return;
+        }
+
         if (!navigator.geolocation) {
             setStatus('このブラウザでは現在地を取得できません。', 'error');
             return;
         }
 
-        if (button) {
-            button.disabled = true;
-            button.textContent = '取得中…';
+        const permissionState = await getGeolocationPermissionState();
+        if (permissionState === 'denied') {
+            setStatus('位置情報が拒否されています。Safariのサイト設定とMacの位置情報サービスを確認してください。', 'error');
+            return;
         }
+
+        setButtonBusy(button, true, '取得中…');
         setStatus('現在地を確認しています…', 'loading');
 
-        navigator.geolocation.getCurrentPosition(
-            position => {
-                const { latitude, longitude, accuracy } = position.coords;
-                currentLocation = { lat: latitude, lng: longitude, accuracy: accuracy || 0 };
-                nearbyMode = true;
+        try {
+            // まず最新・高精度を要求する。
+            const position = await getCurrentPosition({
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            });
+            applyPosition(position);
+        } catch (firstError) {
+            console.warn('現在地の高精度取得に失敗。低精度で再試行します:', firstError);
 
-                showCurrentLocationOnMap();
-                renderNearbyList();
-                setStatus('現在地から近い順', 'success');
-
-                if (button) {
-                    button.disabled = false;
-                    button.textContent = '◎ 現在地';
-                }
-            },
-            error => {
-                console.warn('現在地を取得できませんでした:', error);
-                let message = '現在地を取得できませんでした。';
-                if (error.code === 1) message = '位置情報の利用が許可されていません。';
-                if (error.code === 2) message = '現在地を確認できませんでした。';
-                if (error.code === 3) message = '現在地の取得がタイムアウトしました。';
-                setStatus(message, 'error');
-
-                if (button) {
-                    button.disabled = false;
-                    button.textContent = '◎ 現在地';
-                }
-            },
-            {
-                enableHighAccuracy: false,
-                timeout: 10000,
-                maximumAge: 300000
+            if (firstError?.code === 1) {
+                showGeolocationError(firstError);
+                setButtonBusy(button, false);
+                return;
             }
-        );
+
+            setStatus('現在地を再確認しています…', 'loading');
+
+            try {
+                // Mac/Safariで高精度取得が失敗する場合に備え、キャッシュ許容で再試行。
+                const position = await getCurrentPosition({
+                    enableHighAccuracy: false,
+                    timeout: 30000,
+                    maximumAge: 600000
+                });
+                applyPosition(position);
+            } catch (secondError) {
+                console.warn('現在地の再取得にも失敗しました:', secondError);
+                showGeolocationError(secondError);
+            }
+        } finally {
+            setButtonBusy(button, false);
+        }
+    }
+
+    function getCurrentPosition(options) {
+        return new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+    }
+
+    async function getGeolocationPermissionState() {
+        if (!navigator.permissions?.query) return 'unknown';
+        try {
+            const result = await navigator.permissions.query({ name: 'geolocation' });
+            return result?.state || 'unknown';
+        } catch (_) {
+            // SafariのバージョンによってはPermissions APIのgeolocation照会に非対応。
+            return 'unknown';
+        }
+    }
+
+    function applyPosition(position) {
+        const { latitude, longitude, accuracy } = position.coords;
+        currentLocation = {
+            lat: latitude,
+            lng: longitude,
+            accuracy: accuracy || 0
+        };
+        nearbyMode = true;
+
+        showCurrentLocationOnMap();
+        renderNearbyList();
+        setStatus('現在地から近い順', 'success');
+    }
+
+    function showGeolocationError(error) {
+        const code = Number(error?.code || 0);
+        let message = '現在地を取得できませんでした。';
+
+        if (code === 1) {
+            message = '位置情報の許可が拒否されています。Safariのサイト設定とMacの位置情報サービスを確認してください。';
+        } else if (code === 2) {
+            message = 'Mac / Safariから現在地を特定できません。位置情報サービスが有効か確認して、もう一度「現在地」を押してください。';
+        } else if (code === 3) {
+            message = '現在地の取得がタイムアウトしました。少し待ってから、もう一度「現在地」を押してください。';
+        }
+
+        setStatus(message, 'error');
+    }
+
+    function setButtonBusy(button, busy, label = '取得中…') {
+        if (!button) return;
+        button.disabled = busy;
+        button.textContent = busy ? label : '◎ 現在地';
     }
 
     function showCurrentLocationOnMap() {

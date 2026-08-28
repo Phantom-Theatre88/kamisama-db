@@ -1,0 +1,76 @@
+/* ============================================================
+   参拝ログ：神社紐づけ表示
+   ============================================================ */
+
+.visit-shrine-card {
+    border: 1px solid #c2b180;
+    border-radius: 8px;
+    background: rgba(244, 239, 211, 0.62);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.visit-shrine-card[data-selected="true"] {
+    border-color: #8c1d1d;
+    background: rgba(255, 249, 232, 0.96);
+    box-shadow: 0 0 0 2px rgba(140, 29, 29, 0.08);
+}
+
+#visit-shrine-name {
+    color: #8c1d1d;
+    font-size: 1rem;
+    line-height: 1.45;
+}
+
+#visit-shrine-meta {
+    color: #665f50;
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+
+#visit-change-shrine {
+    align-self: flex-start;
+    margin-top: 5px;
+    border: 1px solid #a6956b;
+    background: #fff;
+    color: #675b43;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.visit-log-start-btn {
+    margin-left: 8px;
+}
+
+.visit-log-shrine {
+    color: #3b3428;
+    font-size: 0.98rem;
+    font-weight: bold;
+    line-height: 1.45;
+    margin-bottom: 4px;
+}
+
+#log-detail-shrine {
+    color: #8c1d1d;
+    font-size: 1.28rem;
+    line-height: 1.45;
+    margin-right: 36px;
+}
+
+#log-detail-date {
+    color: #806c43;
+    font-size: 0.86rem;
+    margin-top: 5px;
+}
+
+@media (max-width: 520px) {
+    .visit-log-start-btn {
+        display: block;
+        margin: 8px 0 0;
+        width: 100%;
+    }
+}

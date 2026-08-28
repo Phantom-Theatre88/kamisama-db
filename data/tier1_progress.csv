@@ -1,0 +1,9 @@
+axis,raw_records,named_shrine_records,status,note
+ICHINOMIYA,104,104,active,全国一宮母集団
+SOJA,93,81,research,12行は廃絶・不明等で神社名空欄
+NIJUNISHA,25,25,active,歴史上22社を現存構成社単位で保持
+JINGU,24,24,research,社号神宮24社
+TAISHA,24,24,research,社号大社24社
+HEAD_SHRINE,32,32,research,総本社・総本宮等の研究候補。個別公式確認前
+TOTAL,302,290,in_progress,カテゴリ重複込み
+EXACT_NAME_UNIQUE,,213,in_progress,完全一致社名のみで重複除去。親子社・表記揺れ・同名別社は未解決

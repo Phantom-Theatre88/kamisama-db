@@ -1,0 +1,39 @@
+name: Build Tier 2 shrine dataset
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build_tier2.py'
+      - '.github/workflows/build-tier2.yml'
+  schedule:
+    - cron: '17 19 * * 0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+      - name: Build Tier 2 dataset
+        run: python scripts/build_tier2.py
+      - name: Commit generated dataset
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/jinja_tier2_generated.csv data/tier2_build_report.json
+          if git diff --cached --quiet; then
+            echo 'No generated changes.'
+            exit 0
+          fi
+          git commit -m 'Build Tier 2 shrine dataset'
+          git push

@@ -5,9 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'scripts/build_tier2.py'
-      - 'scripts/build_tier2_v2.py'
-      - 'scripts/debug_jmapps_paging.py'
+      - 'scripts/build_tier2_v3.py'
       - '.github/workflows/build-tier2.yml'
   schedule:
     - cron: '17 19 * * 0'
@@ -28,10 +26,8 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: pip install requests beautifulsoup4
-      - name: Inspect JMApps paging
-        run: python scripts/debug_jmapps_paging.py
       - name: Build Tier 2 dataset
-        run: python scripts/build_tier2_v2.py
+        run: python scripts/build_tier2_v3.py
       - name: Commit generated dataset to main
         run: |
           git config user.name 'github-actions[bot]'

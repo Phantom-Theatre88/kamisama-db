@@ -1,0 +1,101 @@
+/* ============================================================
+   参拝ログ：日付順 / 神社別 / 神さま別 表示
+   ============================================================ */
+
+.log-sort-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 14px 0 4px;
+}
+
+.log-sort-btn {
+    appearance: none;
+    border: 1px solid #b9aa82;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.86);
+    color: #5f5542;
+    padding: 7px 11px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.log-sort-btn:hover,
+.log-sort-btn:focus-visible {
+    border-color: #8c1d1d;
+    outline: none;
+}
+
+.log-sort-btn.active,
+.log-sort-btn[aria-pressed="true"] {
+    background: #8c1d1d;
+    border-color: #8c1d1d;
+    color: #fffaf0;
+    box-shadow: 0 2px 7px rgba(140, 29, 29, 0.18);
+}
+
+.visit-log-group {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+
+.visit-log-group + .visit-log-group {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(194, 177, 128, 0.52);
+}
+
+.visit-log-group-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 9px;
+}
+
+.visit-log-group-heading h4 {
+    margin: 0;
+    color: #594a31;
+    font-size: 0.98rem;
+    line-height: 1.45;
+}
+
+.visit-log-group-heading span {
+    color: #806c43;
+    font-size: 0.73rem;
+    white-space: nowrap;
+}
+
+.visit-log-group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+@media (max-width: 820px) {
+    .visit-log-group-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 10px;
+    }
+}
+
+@media (max-width: 520px) {
+    .log-sort-controls {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+    }
+
+    .log-sort-btn {
+        padding: 8px 5px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+
+    .visit-log-group-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

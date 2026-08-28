@@ -1,0 +1,20 @@
+/* Tier 2: 数千社表示用 */
+.tier2-dot-marker {
+    stroke: #8c1d1d;
+    fill: #f4efd3;
+}
+
+.tier2-dot-marker.visit-marker-visited {
+    stroke: #d4af37 !important;
+    fill: #fff8dc !important;
+    stroke-width: 4px !important;
+    fill-opacity: 1 !important;
+}
+
+#jinja-list .tier2-list-note {
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    opacity: 0.72;
+    cursor: default;
+}

@@ -27,9 +27,27 @@
                 attributeFilter: ['hidden']
             });
         }
+
+        // app.js のCSV読込は非同期。カード描画より後に完了しても祭神表示を追従させる。
+        let retryCount = 0;
+        const retryTimer = window.setInterval(() => {
+            retryCount += 1;
+            if (list) enhanceCards(list);
+            if (modal) enhanceDetail(modal);
+
+            if (isShrineDataReady() || retryCount >= 20) {
+                window.clearInterval(retryTimer);
+            }
+        }, 250);
     });
 
+    function isShrineDataReady() {
+        return Array.isArray(window.jinjaData) && window.jinjaData.length > 0;
+    }
+
     function enhanceCards(root) {
+        const dataReady = isShrineDataReady();
+
         root.querySelectorAll('.visit-log-card').forEach(card => {
             const shrineEl = card.querySelector('.visit-log-shrine');
             const body = card.querySelector('.visit-log-card-body');
@@ -42,21 +60,22 @@
             card.classList.toggle('visit-log-card-has-photo', !noPhoto);
 
             const enhancementKey = `${shrineName}|${noPhoto ? 'no-photo' : 'photo'}`;
-            if (card.dataset.visualEnhanced === enhancementKey) return;
+            if (dataReady && card.dataset.visualEnhanced === enhancementKey) return;
 
             card.querySelector('.visit-log-gods')?.remove();
-            const gods = getGodsForShrineName(shrineName);
-            if (gods.length > 0) {
-                const godsEl = createGodsElement(gods, 'visit-log-gods', 'visit-log-god-chip');
-                dateEl.insertAdjacentElement('afterend', godsEl);
+            if (dataReady) {
+                const gods = getGodsForShrineName(shrineName);
+                if (gods.length > 0) {
+                    const godsEl = createGodsElement(gods, 'visit-log-gods', 'visit-log-god-chip');
+                    dateEl.insertAdjacentElement('afterend', godsEl);
+                }
+                card.dataset.visualEnhanced = enhancementKey;
             }
-
-            card.dataset.visualEnhanced = enhancementKey;
         });
     }
 
     function enhanceDetail(modal) {
-        if (modal.hidden) return;
+        if (modal.hidden || !isShrineDataReady()) return;
 
         const shrineEl = document.getElementById('log-detail-shrine');
         const dateEl = document.getElementById('log-detail-date');

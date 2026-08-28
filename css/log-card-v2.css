@@ -1,0 +1,192 @@
+/* ============================================================
+   参拝ログ：履歴カード v2
+   写真の有無に依存せず、神社・日付・祭神を主役にする
+   ============================================================ */
+
+#log-list-container {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.visit-log-group-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.visit-log-card {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    min-height: 124px;
+    overflow: hidden;
+    background: rgba(255, 253, 247, 0.96);
+}
+
+.visit-log-card.visit-log-card-no-photo {
+    grid-template-columns: 1fr;
+    min-height: 0;
+}
+
+.visit-log-card-no-photo .visit-log-thumb-wrap {
+    display: none;
+}
+
+.visit-log-card-has-photo .visit-log-thumb-wrap {
+    width: 96px;
+    height: 100%;
+    min-height: 124px;
+    border-right: 1px solid rgba(215, 200, 163, 0.8);
+    background: #eee7d3;
+}
+
+.visit-log-card-has-photo .visit-log-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.visit-log-card-body {
+    min-width: 0;
+    padding: 13px 14px 11px;
+    display: flex;
+    flex-direction: column;
+}
+
+.visit-log-card-no-photo .visit-log-card-body {
+    padding: 14px 15px 12px;
+}
+
+.visit-log-shrine {
+    margin: 0;
+    color: #3d2f20;
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.visit-log-date {
+    margin-top: 3px;
+    color: #8c1d1d;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.visit-log-gods,
+#log-detail-gods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.visit-log-gods {
+    margin-top: 7px;
+}
+
+.visit-log-god-chip,
+.log-detail-god-chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    border: 1px solid rgba(176, 145, 68, 0.5);
+    border-radius: 999px;
+    background: rgba(244, 239, 211, 0.72);
+    color: #67562f;
+    white-space: nowrap;
+}
+
+.visit-log-god-chip {
+    padding: 2px 7px;
+    font-size: 0.68rem;
+    line-height: 1.45;
+}
+
+.visit-log-memo {
+    min-height: 0;
+    margin-top: 8px;
+    color: #5b5448;
+    font-size: 0.76rem;
+    line-height: 1.55;
+    -webkit-line-clamp: 2;
+}
+
+.visit-log-open-hint {
+    margin-top: auto;
+    padding-top: 9px;
+    color: #9b7b20;
+    font-size: 0.7rem;
+}
+
+/* 詳細表示も「写真の器」ではなく参拝記録として締める */
+.log-detail-dialog {
+    width: min(600px, 100%);
+    padding: 22px 24px 19px;
+}
+
+#log-detail-shrine {
+    font-size: 1.3rem;
+    line-height: 1.45;
+}
+
+#log-detail-date {
+    margin-top: 3px;
+    font-size: 0.82rem;
+}
+
+#log-detail-gods {
+    margin-top: 10px;
+}
+
+.log-detail-god-chip {
+    padding: 3px 9px;
+    font-size: 0.72rem;
+    line-height: 1.5;
+}
+
+#log-detail-image {
+    margin-top: 15px;
+    max-height: 50vh;
+}
+
+.log-detail-memo-label {
+    margin-top: 15px;
+}
+
+#log-detail-memo {
+    margin-top: 5px;
+}
+
+#log-detail-actions {
+    margin-top: 16px;
+    padding-top: 12px;
+}
+
+@media (max-width: 820px) {
+    #log-list-container,
+    .visit-log-group-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 620px) {
+    #log-list-container,
+    .visit-log-group-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .visit-log-card {
+        grid-template-columns: 82px minmax(0, 1fr);
+        min-height: 112px;
+    }
+
+    .visit-log-card-has-photo .visit-log-thumb-wrap {
+        width: 82px;
+        min-height: 112px;
+    }
+
+    .log-detail-dialog {
+        width: min(560px, 100%);
+        padding: 18px 17px 16px;
+    }
+}

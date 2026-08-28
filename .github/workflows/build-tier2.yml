@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -26,14 +28,29 @@ jobs:
         run: pip install requests beautifulsoup4
       - name: Build Tier 2 dataset
         run: python scripts/build_tier2.py
-      - name: Commit generated dataset
+      - name: Commit generated dataset to main
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add data/jinja_tier2_generated.csv data/tier2_build_report.json
           if git diff --cached --quiet; then
-            echo 'No generated changes.'
-            exit 0
+            echo 'No generated changes on main.'
+          else
+            git commit -m 'Build Tier 2 shrine dataset'
+            git push origin main
           fi
-          git commit -m 'Build Tier 2 shrine dataset'
-          git push
+      - name: Sync generated dataset to gh-pages
+        run: |
+          cp data/jinja_tier2_generated.csv /tmp/jinja_tier2_generated.csv
+          cp data/tier2_build_report.json /tmp/tier2_build_report.json
+          git fetch origin gh-pages
+          git checkout gh-pages
+          cp /tmp/jinja_tier2_generated.csv data/jinja_tier2_generated.csv
+          cp /tmp/tier2_build_report.json data/tier2_build_report.json
+          git add data/jinja_tier2_generated.csv data/tier2_build_report.json
+          if git diff --cached --quiet; then
+            echo 'No generated changes on gh-pages.'
+          else
+            git commit -m 'Sync Tier 2 shrine dataset'
+            git push origin gh-pages
+          fi

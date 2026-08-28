@@ -1,7 +1,7 @@
 // ============================================================
 // 参拝ログ Step 1
-// 参拝日・メモ・御朱印写真を端末内へ保存し、あとから見返す
-// IndexedDB を使用（画像Blobを保存）
+// 参拝日を必須、メモ・御朱印写真は任意で端末内へ保存する
+// IndexedDB を使用（画像がある場合はBlobを保存）
 // ============================================================
 
 (() => {
@@ -103,6 +103,7 @@
         clearButton.addEventListener('click', () => {
             input.value = '';
             clearSelectedPhoto();
+            setStatus('写真なしでも保存できます。', 'ready');
         });
     }
 
@@ -137,19 +138,13 @@
             return;
         }
 
-        if (!selectedPhoto) {
-            setStatus('御朱印写真を1枚選んでください。', 'error');
-            document.getElementById('goshuin-photo')?.focus();
-            return;
-        }
-
         const record = {
             id: createId(),
             visitDate: dateInput.value,
             memo: memoInput.value.trim(),
-            photo: selectedPhoto,
-            photoName: selectedPhoto.name || 'goshuin-photo',
-            photoType: selectedPhoto.type || 'image/*',
+            photo: selectedPhoto || null,
+            photoName: selectedPhoto ? (selectedPhoto.name || 'goshuin-photo') : '',
+            photoType: selectedPhoto ? (selectedPhoto.type || 'image/*') : '',
             createdAt: new Date().toISOString()
         };
 
@@ -252,7 +247,7 @@
         } else {
             const noImage = document.createElement('div');
             noImage.className = 'visit-log-no-image';
-            noImage.textContent = '御朱印';
+            noImage.textContent = '写真なし';
             imageWrap.appendChild(noImage);
         }
 

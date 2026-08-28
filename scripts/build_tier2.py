@@ -7,7 +7,7 @@ import time
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -22,20 +22,20 @@ MASTER = Path("data/jinja_master.csv")
 MAX_WORKERS = 6
 
 HEADERS = [
-    "id","name","yomi","former_shrine_rank","shikinaisha_type","ichinomiya_name",
-    "province","county","prefecture","city","address","lat","lng","gmap_url",
-    "main_god_ids","sub_god_ids","description","source_key","source_id","db_tier"
+    "id", "name", "yomi", "former_shrine_rank", "shikinaisha_type", "ichinomiya_name",
+    "province", "county", "prefecture", "city", "address", "lat", "lng", "gmap_url",
+    "main_god_ids", "sub_god_ids", "description", "source_key", "source_id", "db_tier"
 ]
 
-HEADERS_HTTP = {
-    "User-Agent": "kamisama-db-research-builder/1.1 (+https://github.com/Phantom-Theatre88/kamisama-db)"
+HTTP_HEADERS = {
+    "User-Agent": "kamisama-db-research-builder/1.2 (+https://github.com/Phantom-Theatre88/kamisama-db)"
 }
 
 
 def fetch(url, retries=4):
     for i in range(retries):
         try:
-            r = requests.get(url, headers=HEADERS_HTTP, timeout=30)
+            r = requests.get(url, headers=HTTP_HEADERS, timeout=30)
             r.raise_for_status()
             r.encoding = r.apparent_encoding or "utf-8"
             return r.text
@@ -55,11 +55,10 @@ def norm_name(s):
     return re.sub(r"[\s・･,，、()（）\[\]［］]", "", s)
 
 
-def with_page(url, page):
-    p = urlparse(url)
-    q = dict(parse_qsl(p.query, keep_blank_values=True))
-    q["page"] = str(page)
-    return urlunparse((p.scheme, p.netloc, p.path, p.params, urlencode(q), p.fragment))
+def distance_km(lat1, lng1, lat2, lng2):
+    dy = (lat1 - lat2) * 111.0
+    dx = (lng1 - lng2) * 111.0 * math.cos(math.radians((lat1 + lat2) / 2))
+    return math.hypot(dx, dy)
 
 
 def dms_to_decimal(text):
@@ -68,12 +67,12 @@ def dms_to_decimal(text):
     lat = lon = None
     m = re.search(r"北緯\s*(\d+)\s*度\s*(\d+)\s*分\s*([\d.]+)\s*秒", text)
     if m:
-        lat = int(m.group(1)) + int(m.group(2))/60 + float(m.group(3))/3600
+        lat = int(m.group(1)) + int(m.group(2)) / 60 + float(m.group(3)) / 3600
     m = re.search(r"東経\s*(\d+)\s*度\s*(\d+)\s*分\s*([\d.]+)\s*秒", text)
     if m:
-        lon = int(m.group(1)) + int(m.group(2))/60 + float(m.group(3))/3600
+        lon = int(m.group(1)) + int(m.group(2)) / 60 + float(m.group(3)) / 3600
     if lat is None or lon is None:
-        m = re.search(r"ll=([\d.]+)\s*,\s*([\d.]+)", text)
+        m = re.search(r"(?:ll=|q=)([\d.]+)\s*,\s*([\d.]+)", text)
         if m:
             lat, lon = float(m.group(1)), float(m.group(2))
     return lat, lon
@@ -97,13 +96,20 @@ def get_fields(html):
 
 
 def collect_detail_links(start_url, max_pages=300):
+    """Follow the database's own next-page link rather than guessing page parameters."""
+    url = start_url
+    seen_pages = set()
     seen_ids = set()
     links = []
-    empty_pages = 0
-    for page in range(1, max_pages + 1):
-        html = fetch(with_page(start_url, page))
+    page_no = 0
+
+    while url and url not in seen_pages and page_no < max_pages:
+        page_no += 1
+        seen_pages.add(url)
+        html = fetch(url)
         soup = BeautifulSoup(html, "html.parser")
         page_new = 0
+
         for a in soup.find_all("a", href=True):
             href = a["href"]
             if "det.html?data_id=" not in href:
@@ -114,14 +120,24 @@ def collect_detail_links(start_url, max_pages=300):
             seen_ids.add(m.group(1))
             links.append((urljoin(BASE, href), m.group(1)))
             page_new += 1
-        if page_new == 0:
-            empty_pages += 1
-        else:
-            empty_pages = 0
-        print(f"list page {page}: +{page_new} (total {len(links)})")
-        if empty_pages >= 1:
+
+        print(f"list page {page_no}: +{page_new} (total {len(links)})")
+
+        next_url = None
+        for a in soup.find_all("a", href=True):
+            label = clean(a.get_text(" ", strip=True))
+            rel = " ".join(a.get("rel", [])) if a.get("rel") else ""
+            if "次へ" in label or "次の" in label or "next" in rel.lower():
+                candidate = urljoin(url, a["href"])
+                if candidate not in seen_pages:
+                    next_url = candidate
+                    break
+
+        if not next_url:
             break
+        url = next_url
         time.sleep(0.2)
+
     return links
 
 
@@ -130,30 +146,36 @@ def old_rank(note):
     return m.group(1) if m else ""
 
 
-def existing_keys():
-    names = set()
-    coords = []
+def existing_records():
+    rows = []
     if not MASTER.exists():
-        return names, coords
+        return rows
     with MASTER.open(encoding="utf-8-sig", newline="") as f:
         for r in csv.DictReader(f):
-            n = norm_name(r.get("name", ""))
-            if n:
-                names.add(n)
             try:
-                coords.append((float(r["lat"]), float(r["lng"]), n))
+                lat = float(r.get("lat", ""))
+                lng = float(r.get("lng", ""))
             except Exception:
-                pass
-    return names, coords
+                lat = lng = None
+            rows.append({
+                "name_key": norm_name(r.get("name", "")),
+                "lat": lat,
+                "lng": lng,
+            })
+    return rows
 
 
-def near_existing(lat, lng, coords, km=0.12):
-    if lat is None or lng is None:
+def matches_existing(name, lat, lng, existing, max_km=2.0):
+    """Same-name shrines are duplicates only when they are geographically the same shrine."""
+    nk = norm_name(name)
+    if not nk:
         return False
-    for a, b, _ in coords:
-        dy = (lat - a) * 111.0
-        dx = (lng - b) * 111.0 * math.cos(math.radians(lat))
-        if math.hypot(dx, dy) <= km:
+    for e in existing:
+        if e["name_key"] != nk:
+            continue
+        if lat is None or lng is None or e["lat"] is None or e["lng"] is None:
+            continue
+        if distance_km(lat, lng, e["lat"], e["lng"]) <= max_km:
             return True
     return False
 
@@ -176,15 +198,16 @@ def parse_modern(item):
         note = clean(fields.get("+備考") or fields.get("備考"))
         if not name or lat is None or lng is None:
             return None
+        shiki = "式内社" if "式内社" in note else ""
         return {
             "id": f"T2M{data_id}", "name": name, "yomi": yomi,
-            "former_shrine_rank": old_rank(note),
-            "shikinaisha_type": "式内社" if "式内社" in note else "",
+            "former_shrine_rank": old_rank(note), "shikinaisha_type": shiki,
             "ichinomiya_name": "", "province": province, "county": "",
             "prefecture": pref, "city": "", "address": addr,
             "lat": f"{lat:.7f}", "lng": f"{lng:.7f}",
             "gmap_url": f"https://maps.google.com/?q={lat:.7f},{lng:.7f}",
-            "main_god_ids": "", "sub_god_ids": "", "description": note,
+            "main_god_ids": "", "sub_god_ids": "",
+            "description": "國學院大學「神道・神社史料集成（現代）」収録社。",
             "source_key": "KOKUGAKUIN_MODERN", "source_id": data_id, "db_tier": "2"
         }
     except Exception as e:
@@ -192,7 +215,7 @@ def parse_modern(item):
         return None
 
 
-def build_modern(existing_names, existing_coords):
+def build_modern(existing):
     links = collect_detail_links(MODERN_START)
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         parsed = list(ex.map(parse_modern, links))
@@ -201,8 +224,7 @@ def build_modern(existing_names, existing_coords):
         if not r:
             continue
         lat, lng = float(r["lat"]), float(r["lng"])
-        nk = norm_name(r["name"])
-        if nk in existing_names or near_existing(lat, lng, existing_coords):
+        if matches_existing(r["name"], lat, lng, existing):
             continue
         out.append(r)
     return out, len(links)
@@ -227,7 +249,8 @@ def parse_shikinai(item):
         shikitype = clean(fields.get("名神大社・大社・小社") or fields.get("社格"))
         rows = []
         for idx, raw_name in numbered_fields(fields, "現社名など"):
-            name = clean(re.sub(r"^\(論社\)", "", raw_name))
+            is_candidate = "論社" in raw_name
+            name = clean(re.sub(r"^[（(]\s*論社\s*[）)]\s*", "", raw_name))
             coord = fields.get(f"+現社名など（{idx}）緯度経度") or fields.get(f"現社名など（{idx}）緯度経度") or ""
             link = fields.get(f"+現社名など（{idx}）リンク") or fields.get(f"現社名など（{idx}）リンク") or ""
             lat, lng = dms_to_decimal(coord + " " + link)
@@ -241,7 +264,7 @@ def parse_shikinai(item):
                 "lat": f"{lat:.7f}", "lng": f"{lng:.7f}",
                 "gmap_url": f"https://maps.google.com/?q={lat:.7f},{lng:.7f}",
                 "main_god_ids": "", "sub_god_ids": "",
-                "description": "延喜式内社データベースの現社候補" + ("（論社）" if "論社" in raw_name else ""),
+                "description": "延喜式内社データベースの現社候補" + ("（論社）" if is_candidate else ""),
                 "source_key": "KOKUGAKUIN_SHIKINAI", "source_id": f"{data_id}:{idx}", "db_tier": "2"
             })
         return rows
@@ -250,40 +273,43 @@ def parse_shikinai(item):
         return []
 
 
-def build_shikinai(existing_names, existing_coords, modern_rows):
+def same_generated_shrine(a, b, max_km=0.5):
+    if norm_name(a["name"]) != norm_name(b["name"]):
+        return False
+    return distance_km(float(a["lat"]), float(a["lng"]), float(b["lat"]), float(b["lng"])) <= max_km
+
+
+def build_shikinai(existing, modern_rows):
     links = collect_detail_links(SHIKINAI_START)
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         batches = list(ex.map(parse_shikinai, links))
     out = []
-    seen = {(norm_name(r["name"]), round(float(r["lat"]), 4), round(float(r["lng"]), 4)) for r in modern_rows}
+    generated = list(modern_rows)
     for batch in batches:
         for r in batch:
             lat, lng = float(r["lat"]), float(r["lng"])
-            nk = norm_name(r["name"])
-            key = (nk, round(lat, 4), round(lng, 4))
-            if key in seen or nk in existing_names or near_existing(lat, lng, existing_coords):
+            if matches_existing(r["name"], lat, lng, existing):
                 continue
-            seen.add(key)
+            if any(same_generated_shrine(r, g) for g in generated):
+                continue
+            generated.append(r)
             out.append(r)
     return out, len(links)
 
 
 def dedupe(rows):
     result = []
-    seen = set()
     for r in rows:
-        key = (norm_name(r["name"]), round(float(r["lat"]), 4), round(float(r["lng"]), 4))
-        if key in seen:
+        if any(same_generated_shrine(r, x) for x in result):
             continue
-        seen.add(key)
         result.append(r)
     return result
 
 
 def main():
-    existing_names, existing_coords = existing_keys()
-    modern, modern_source_count = build_modern(existing_names, existing_coords)
-    shikinai, shikinai_source_count = build_shikinai(existing_names, existing_coords, modern)
+    existing = existing_records()
+    modern, modern_source_count = build_modern(existing)
+    shikinai, shikinai_source_count = build_shikinai(existing, modern)
     rows = dedupe(modern + shikinai)
     rows.sort(key=lambda r: (r.get("prefecture", ""), r.get("province", ""), r["name"], r["id"]))
 
@@ -297,12 +323,13 @@ def main():
         "source": "國學院大學デジタルミュージアム",
         "modern_source_records_seen": modern_source_count,
         "shikinai_source_records_seen": shikinai_source_count,
-        "existing_master_records": len(existing_names),
+        "existing_master_records": len(existing),
         "modern_rows_added": len(modern),
         "shikinai_rows_added": len(shikinai),
         "tier2_generated_rows": len(rows),
         "worker_count": MAX_WORKERS,
-        "note": "祭神K-IDは未確定のものを空欄保持。Tier2完成判定は検索・地図表示を優先。"
+        "dedupe_rule": "same normalized shrine name + nearby coordinates",
+        "note": "祭神K-ID未確認は空欄保持。論社は論社表記を保持。"
     }
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))

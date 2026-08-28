@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'scripts/build_tier2_v3.py'
+      - 'scripts/build_tier2_v4.py'
       - '.github/workflows/build-tier2.yml'
   schedule:
     - cron: '17 19 * * 0'
@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests beautifulsoup4
       - name: Build Tier 2 dataset
-        run: python scripts/build_tier2_v3.py
+        run: python scripts/build_tier2_v4.py
       - name: Commit generated dataset to main
         run: |
           git config user.name 'github-actions[bot]'
@@ -37,14 +37,16 @@ jobs:
             echo 'No generated changes on main.'
           else
             git commit -m 'Build Tier 2 shrine dataset'
-            git push origin main
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
       - name: Sync generated dataset to gh-pages
         run: |
           cp data/jinja_tier2_generated.csv /tmp/jinja_tier2_generated.csv
           cp data/tier2_build_report.json /tmp/tier2_build_report.json
           git fetch origin gh-pages
-          git checkout gh-pages
+          git checkout -B gh-pages origin/gh-pages
           cp /tmp/jinja_tier2_generated.csv data/jinja_tier2_generated.csv
           cp /tmp/tier2_build_report.json data/tier2_build_report.json
           git add data/jinja_tier2_generated.csv data/tier2_build_report.json
@@ -52,5 +54,5 @@ jobs:
             echo 'No generated changes on gh-pages.'
           else
             git commit -m 'Sync Tier 2 shrine dataset'
-            git push origin gh-pages
+            git push origin HEAD:gh-pages
           fi

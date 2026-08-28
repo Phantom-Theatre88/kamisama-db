@@ -1,0 +1,37 @@
+/* ============================================================
+   神社マップ：参拝済みピン
+   ============================================================ */
+
+.custom-torii-marker {
+    overflow: visible !important;
+}
+
+.custom-torii-marker.visit-marker-visited > div {
+    background-color: #fff8dc !important;
+    border-color: #d4af37 !important;
+    box-shadow:
+        0 0 0 3px rgba(212, 175, 55, 0.22),
+        0 3px 8px rgba(0, 0, 0, 0.42) !important;
+}
+
+.custom-torii-marker.visit-marker-visited::after {
+    content: '✓';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid #fff9e8;
+    background: #d4af37;
+    color: #3f2c08;
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    z-index: 5;
+}

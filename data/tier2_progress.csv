@@ -1,0 +1,4 @@
+source_key,source_name,source_scope,source_records,target_tier,status,imported_to_jinja_master,dedup_pending,note
+MODERN,國學院大學 神道・神社史料集成（現代）,旧官国幣社（別格含む）以下・府県社以上,約1500,2,active,0,,現行社名・鎮座地・公式URL・式内社/二十二社等の属性を利用
+SHIKINAI,國學院大學 延喜式内社データベース,延喜式内社,2861,2,active,0,,神名帳3132座。論社・GoogleMap対応位置情報を含む
+TOTAL_RAW,Tier2生母集団,MODERN+SHIKINAI,約4361,2,in_progress,0,,カテゴリ間およびTier1との重複を統合して数千社の実神社DBへ

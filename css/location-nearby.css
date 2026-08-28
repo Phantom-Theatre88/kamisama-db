@@ -40,11 +40,16 @@
     top: 49px;
     right: 20px;
     z-index: 1001;
-    padding: 4px 8px;
-    border-radius: 12px;
-    background: rgba(26, 26, 26, 0.86);
+    max-width: min(470px, calc(100vw - 40px));
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(26, 26, 26, 0.92);
     color: #f4efd3;
-    font-size: 0.66rem;
+    font-size: 0.68rem;
+    line-height: 1.45;
+    text-align: left;
+    white-space: normal;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
     pointer-events: none;
     opacity: 0;
     transform: translateY(-2px);
@@ -58,6 +63,10 @@
 
 .nearby-status[data-type="success"] {
     color: #f4df80;
+}
+
+.nearby-status[data-type="loading"] {
+    color: #f4efd3;
 }
 
 .nearby-status[data-type="error"] {
@@ -130,5 +139,6 @@
 
     .nearby-status {
         right: 10px;
+        max-width: calc(100vw - 20px);
     }
 }

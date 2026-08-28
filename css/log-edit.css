@@ -1,0 +1,76 @@
+/* ============================================================
+   参拝ログ：編集 / 削除
+   ============================================================ */
+
+#visit-shrine-card.editing {
+    border-color: #9b7b20;
+    box-shadow: 0 0 0 2px rgba(155, 123, 32, 0.1);
+}
+
+#visit-edit-cancel {
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid #a6956b;
+    border-radius: 6px;
+    background: #fffdf7;
+    color: #675b43;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#visit-edit-cancel[hidden] {
+    display: none;
+}
+
+#log-detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(194, 177, 128, 0.7);
+}
+
+#log-detail-edit,
+#log-detail-delete {
+    min-width: 96px;
+    border-radius: 6px;
+    padding: 9px 14px;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#log-detail-edit {
+    border: 1px solid #a6956b;
+    background: #fffdf7;
+    color: #5f5542;
+}
+
+#log-detail-delete {
+    border: 1px solid #8c1d1d;
+    background: #8c1d1d;
+    color: #fffaf0;
+}
+
+#log-detail-edit:hover,
+#log-detail-edit:focus-visible,
+#log-detail-delete:hover,
+#log-detail-delete:focus-visible {
+    outline: 2px solid rgba(155, 123, 32, 0.25);
+    outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+    #log-detail-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #log-detail-edit,
+    #log-detail-delete {
+        width: 100%;
+        min-width: 0;
+    }
+}

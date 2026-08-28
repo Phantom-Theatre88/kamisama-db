@@ -1,0 +1,8 @@
+tier,source_name,scope,approx_records,source_url,usage,status,note
+1,全国一の宮巡拝会,全国一宮,104,https://ichinomiya.gr.jp/,一宮母集団,active,候補・複数宮はstatusを分離
+1,全国総社調査母集団,全国総社候補,93,https://genbu.net/engi/soujya.htm,総社母集団,research,公式確認後にrolesへ昇格
+1,二十二社母集団,二十二社,22,,二十二社母集団,planned,公式・研究資料で照合
+1,総本社・総本宮母集団,信仰系統総本社,, ,総本社母集団,planned,信仰系統ごとに公式確認
+2,國學院大學 神道・神社史料集成（現代）,旧官国幣社以下府県社以上,約1500,https://d-museum.kokugakuin.ac.jp/database/,地域主要神社母集団,active,現行社名・所在地・式内社等の属性あり
+2,國學院大學 延喜式内社データベース,式内社,2861,https://d-museum.kokugakuin.ac.jp/topics_detail12/,式内社母集団,active,3132座・論社・位置情報あり
+3,神社本庁 都道府県神社庁一覧,全国47都道府県,約80000,https://www.jinjahoncho.or.jp/jinjahoncho/jinjacho/,県別全国神社収集の入口,active,各県神社庁の公開範囲に差あり

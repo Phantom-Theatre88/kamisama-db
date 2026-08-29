@@ -10,9 +10,32 @@
     let mapBound = false;
 
     function validLatLng(jinja) {
-        const lat = Number(jinja.lat);
-        const lng = Number(jinja.lng);
-        return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+        const rawLat = String(jinja?.lat ?? '').trim();
+        const rawLng = String(jinja?.lng ?? '').trim();
+        if (!rawLat || !rawLng) return null;
+        const lat = Number(rawLat);
+        const lng = Number(rawLng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+        return { lat, lng };
+    }
+
+    function isInsideCurrentMap(pos) {
+        if (!window.map || !pos) return false;
+        const bounds = window.map.getBounds();
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        if (!sw || !ne) return false;
+
+        const latInside = pos.lat >= sw.lat && pos.lat <= ne.lat;
+        let lngInside;
+        if (sw.lng <= ne.lng) {
+            lngInside = pos.lng >= sw.lng && pos.lng <= ne.lng;
+        } else {
+            // 日付変更線をまたぐ表示範囲にも対応。
+            lngInside = pos.lng >= sw.lng || pos.lng <= ne.lng;
+        }
+        return latInside && lngInside;
     }
 
     function currentListRows() {
@@ -23,16 +46,9 @@
         if (query) {
             return { rows: filtered.slice(0, SEARCH_LIMIT), total: filtered.length, mode: 'search' };
         }
+        if (!window.map) return { rows: [], total: 0, mode: 'map' };
 
-        if (!window.map) {
-            return { rows: [], total: 0, mode: 'map' };
-        }
-
-        const bounds = window.map.getBounds();
-        const visible = filtered.filter(jinja => {
-            const pos = validLatLng(jinja);
-            return pos && bounds.contains([pos.lat, pos.lng]);
-        });
+        const visible = filtered.filter(jinja => isInsideCurrentMap(validLatLng(jinja)));
         return { rows: visible.slice(0, DEFAULT_VISIBLE_LIMIT), total: visible.length, mode: 'map' };
     }
 
@@ -56,8 +72,6 @@
             drawerBound = true;
             toggle.textContent = '⌃ 神社一覧';
             toggle.setAttribute('aria-expanded', 'false');
-
-            // captureで旧app.jsのsidebar-toggle処理より先に受け、二重処理を止める。
             toggle.addEventListener('click', event => {
                 event.preventDefault();
                 event.stopImmediatePropagation();
@@ -73,9 +87,10 @@
     function bindMapListSync() {
         if (mapBound || !window.map) return Boolean(window.map);
         mapBound = true;
-        window.map.on('moveend zoomend', () => window.renderJinjaList());
-        // 初回も必ず現在の地図範囲で描き直す。
-        window.renderJinjaList();
+        const refresh = () => window.requestAnimationFrame(() => window.renderJinjaList());
+        window.map.on('moveend', refresh);
+        window.map.on('zoomend', refresh);
+        refresh();
         return true;
     }
 
@@ -88,7 +103,6 @@
         filteredJinja.forEach(jinja => {
             const pos = validLatLng(jinja);
             if (!pos) return;
-
             let marker;
             if (useLightMarkers) {
                 marker = L.circleMarker([pos.lat, pos.lng], {
@@ -105,7 +119,6 @@
                 const icon = L.divIcon({ className: 'custom-torii-marker', html: iconHtml, iconSize: [32, 32], iconAnchor: [16, 16] });
                 marker = L.marker([pos.lat, pos.lng], { icon, title: jinja.name || '' });
             }
-
             marker.on('click', () => window.selectJinja(jinja.id));
             window.markersLayer.addLayer(marker);
         });

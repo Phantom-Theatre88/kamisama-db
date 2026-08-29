@@ -3,6 +3,7 @@
 // - 元CSVは変更しない
 // - localStorageへ追加分を保存
 // - kamisamaAliasesByCanonicalIdへ即時反映
+// - 祭神検索へ即時反映
 // ============================================================
 (() => {
     'use strict';
@@ -31,7 +32,7 @@
 
     function mergeLocalAliases() {
         if (!(window.kamisamaAliasesByCanonicalId instanceof Map)) return false;
-        if (!Array.isArray(window.kamisamaAliasData) || !window.kamisamaAliasData.length) return false;
+        if (!Array.isArray(window.kamisamaAliasData)) return false;
 
         const locals = readLocalAliases();
         const baseRows = window.kamisamaAliasData.filter(row => row?.source_type !== LOCAL_FLAG);
@@ -60,6 +61,13 @@
         return true;
     }
 
+    function notifyAliasChanged(godId) {
+        window.dispatchEvent(new CustomEvent('god-aliases-updated', {
+            detail: { godId }
+        }));
+        document.getElementById('jinja-search')?.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     function currentGodId() {
         return document.querySelector('#god-daicho-list li.selected[data-god-id]')?.dataset.godId || '';
     }
@@ -82,18 +90,24 @@
         const ensureButton = () => {
             const godId = currentGodId();
             const h2 = profile.querySelector('h2');
-            if (!godId || !h2 || profile.querySelector('.god-alias-edit-launch')) return;
+            if (!godId || !h2) return;
 
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'god-alias-edit-launch';
-            button.textContent = '✏️ 別名編集';
-            button.addEventListener('click', () => openEditor(godId));
-            h2.insertAdjacentElement('afterend', button);
+            let button = profile.querySelector('.god-alias-edit-launch');
+            if (!button) {
+                button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'god-alias-edit-launch';
+                h2.insertAdjacentElement('afterend', button);
+            }
+
+            const count = aliasesFor(godId).length;
+            button.textContent = count ? `✏️ 別名編集（${count}）` : '✏️ 別名編集';
+            button.onclick = () => openEditor(godId);
         };
 
         const observer = new MutationObserver(() => window.setTimeout(ensureButton, 0));
         observer.observe(profile, { childList: true, subtree: true });
+        window.addEventListener('god-aliases-updated', () => window.setTimeout(ensureButton, 0));
         ensureButton();
         return true;
     }
@@ -195,6 +209,12 @@
         const status = sheet.querySelector('.god-alias-edit-status');
         if (!aliasName) return;
 
+        const god = window.kamisamaMap instanceof Map ? window.kamisamaMap.get(godId) : null;
+        if (god && normalize(god.name) === aliasName) {
+            if (status) status.textContent = '正式名と同じ表記です。追加は不要です。';
+            return;
+        }
+
         const alreadyExists = aliasesFor(godId).some(row => normalize(row.alias_name) === aliasName);
         if (alreadyExists) {
             if (status) status.textContent = 'この表記はすでに登録されています。';
@@ -215,7 +235,7 @@
         form.reset();
         renderAliasList(sheet);
         if (status) status.textContent = '追加しました。祭神検索にも反映されています。';
-        document.getElementById('jinja-search')?.dispatchEvent(new Event('input', { bubbles: true }));
+        notifyAliasChanged(godId);
     }
 
     function removeAlias(godId, aliasName, sheet) {
@@ -227,12 +247,12 @@
         renderAliasList(sheet);
         const status = sheet.querySelector('.god-alias-edit-status');
         if (status) status.textContent = '端末追加の表記を削除しました。';
-        document.getElementById('jinja-search')?.dispatchEvent(new Event('input', { bubbles: true }));
+        notifyAliasChanged(godId);
     }
 
     function waitUntilReady() {
         const ready = Array.isArray(window.kamisamaData) && window.kamisamaData.length > 0 &&
-            Array.isArray(window.kamisamaAliasData) && window.kamisamaAliasData.length > 0 &&
+            Array.isArray(window.kamisamaAliasData) &&
             window.kamisamaAliasesByCanonicalId instanceof Map;
 
         if (ready) {

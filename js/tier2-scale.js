@@ -138,9 +138,11 @@
             li.dataset.jinjaId = jinja.id;
             const location = [jinja.prefecture, jinja.city].filter(Boolean).join(' ') || jinja.province || '';
             const type = jinja.shikinaisha_type || jinja.ichinomiya_name || (jinja.db_tier ? `Tier ${jinja.db_tier}` : '');
+            const yomi = (jinja.yomi || '').trim();
+            const locationText = `${location || '所在地情報なし'}${type ? ` · ${type}` : ''}`;
             li.innerHTML = `
                 <div class="list-shrine-name">${jinja.name || ''}</div>
-                <div class="list-shrine-meta">${location || '所在地情報なし'}${type ? ` · ${type}` : ''}</div>`;
+                <div class="list-shrine-meta">${yomi ? `${yomi} / ` : ''}${locationText}</div>`;
             li.addEventListener('click', () => window.selectJinja(jinja.id));
             fragment.appendChild(li);
         });

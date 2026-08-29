@@ -107,3 +107,24 @@
         document.head.appendChild(script);
     }
 })();
+
+// 検証版のみ: 神さま図鑑の別名・異表記編集UIを追加読み込みする。
+(() => {
+    'use strict';
+
+    if (!document.querySelector('link[data-god-alias-edit-preview]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/god-alias-edit.css?v=20260829_preview_01';
+        link.dataset.godAliasEditPreview = '1';
+        document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-god-alias-edit-preview]')) {
+        const script = document.createElement('script');
+        script.src = 'js/god-alias-edit.js?v=20260829_preview_01';
+        script.defer = true;
+        script.dataset.godAliasEditPreview = '1';
+        document.head.appendChild(script);
+    }
+})();

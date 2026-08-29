@@ -1,14 +1,14 @@
 /* ============================================================
    SAFE PREVIEW: Map Split Layout
    - HTML / Leaflet init / data loader are unchanged.
-   - Landscape: map 60% | info 40%
-   - Portrait : map 55% / info 45%
+   - Landscape: map 65% | info 35%
+   - Portrait : map 60% / info 40%
    ============================================================ */
 
 /* Existing map-view itself becomes the two-pane grid. */
 #map-view.active {
     display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+    grid-template-columns: minmax(0, 13fr) minmax(320px, 7fr);
     grid-template-rows: minmax(0, 1fr);
     gap: 0;
     min-width: 0;
@@ -126,7 +126,7 @@
 @media (orientation: portrait) {
     #map-view.active {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: minmax(0, 55fr) minmax(260px, 45fr);
+        grid-template-rows: minmax(0, 60fr) minmax(260px, 40fr);
     }
 
     #map-view > #map {
@@ -155,7 +155,7 @@
 
 @media (max-width: 720px) and (orientation: portrait) {
     #map-view.active {
-        grid-template-rows: minmax(0, 52fr) minmax(230px, 48fr);
+        grid-template-rows: minmax(0, 60fr) minmax(230px, 40fr);
     }
 
     #map-view > #sidebar .sidebar-content,

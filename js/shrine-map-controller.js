@@ -28,6 +28,13 @@
 
     const includes = (value, q) => String(value || '').includes(q);
 
+    function normalizeSourceTypes(rows) {
+        rows.forEach(shrine => {
+            if (!shrine.source_type) shrine.source_type = 'official';
+        });
+        return rows;
+    }
+
     function godMatches(id, q) {
         const god = window.kamisamaMap instanceof Map ? window.kamisamaMap.get(id) : null;
         if (god && [god.name, god.yomi, god.description].some(v => includes(v, q))) return true;
@@ -64,7 +71,7 @@
     }
 
     function computeState() {
-        const all = Array.isArray(window.jinjaData) ? window.jinjaData : [];
+        const all = normalizeSourceTypes(Array.isArray(window.jinjaData) ? window.jinjaData : []);
         const q = queryText();
         const searched = q ? all.filter(s => matchesSearch(s, q)) : all;
         const bounds = mapBoundsNumbers();
@@ -112,8 +119,6 @@
         if (!list) return;
         ensureDrawer();
 
-        // 検索中も「現在の地図範囲」を優先する。
-        // 検索結果が地図外にしか無い場合は searched を表示し、選択時にその神社へ移動できる。
         const source = state.q && state.visible.length === 0 ? state.searched : state.visible;
         const limit = state.q ? SEARCH_LIMIT : LIST_LIMIT;
         const rows = source.slice(0, limit);
@@ -123,9 +128,11 @@
         rows.forEach(shrine => {
             const li = document.createElement('li');
             li.dataset.jinjaId = shrine.id;
+            li.dataset.sourceType = shrine.source_type || 'official';
             const location = [shrine.prefecture, shrine.city].filter(Boolean).join(' ') || shrine.province || '';
+            const sourceBadge = shrine.source_type === 'user' ? '<span class="user-source-badge">追加</span>' : '';
             li.innerHTML = `
-                <div class="list-shrine-name">${shrine.name || ''}</div>
+                <div class="list-shrine-name">${shrine.name || ''}${sourceBadge}</div>
                 <div class="list-shrine-meta">${location || shrine.yomi || '所在地情報なし'}</div>`;
             li.addEventListener('click', () => {
                 const pos = toPos(shrine);
@@ -160,7 +167,6 @@
         if (!window.markersLayer || typeof L === 'undefined') return;
         window.markersLayer.clearLayers();
 
-        // 地図上には現在の表示範囲だけを描画する。パン後に再生成する。
         const source = state.visible;
         const useLight = source.length > BULK_THRESHOLD;
         source.forEach(shrine => {
@@ -169,12 +175,17 @@
             let marker;
             if (useLight) {
                 marker = L.circleMarker([pos.lat, pos.lng], {
-                    radius: 4, weight: 1, opacity: .9, fillOpacity: .72,
-                    className: 'tier2-dot-marker', title: shrine.name || ''
+                    radius: shrine.source_type === 'user' ? 6 : 4,
+                    weight: shrine.source_type === 'user' ? 2 : 1,
+                    opacity: .9,
+                    fillOpacity: .72,
+                    className: shrine.source_type === 'user' ? 'tier2-dot-marker user-shrine-marker' : 'tier2-dot-marker',
+                    title: shrine.name || ''
                 });
             } else {
+                const sourceClass = shrine.source_type === 'user' ? ' user-shrine-marker' : '';
                 const icon = L.divIcon({
-                    className: 'custom-torii-marker',
+                    className: `custom-torii-marker${sourceClass}`,
                     html: '<div style="width:32px;height:32px;background:#f4efd3;border:2px solid #8c1d1d;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:18px">⛩</div>',
                     iconSize: [32, 32], iconAnchor: [16, 16]
                 });
@@ -202,9 +213,9 @@
     function init() {
         if (initialized || !window.map || !window.markersLayer || !Array.isArray(window.jinjaData) || !window.jinjaData.length) return false;
         initialized = true;
+        normalizeSourceTypes(window.jinjaData);
         ensureDrawer();
 
-        // 既存コードから呼ばれる入口も、このコントローラに統一。
         window.renderJinjaList = refresh;
         window.renderMarkers = refresh;
         window.filterData = () => computeState().searched;

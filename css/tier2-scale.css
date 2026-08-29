@@ -16,30 +16,37 @@
     left: 50%;
     bottom: 12px;
     transform: translateX(-50%);
-    width: min(720px, calc(100% - 24px));
-    max-height: 28%;
+    width: min(760px, calc(100% - 24px));
+    max-height: 42px;
     border-radius: 14px 14px 10px 10px;
     overflow: hidden;
     transition: max-height .25s ease, box-shadow .25s ease;
 }
 
-#sidebar.tier2-bottom-sheet.collapsed {
+#sidebar.tier2-bottom-sheet.collapsed,
+#sidebar.tier2-bottom-sheet.expanded {
     transform: translateX(-50%);
 }
 
-#sidebar.tier2-bottom-sheet.expanded {
-    max-height: 72%;
+#sidebar.tier2-bottom-sheet.sheet-open {
+    max-height: 48%;
     box-shadow: 0 -8px 28px rgba(0,0,0,.24);
 }
 
 #sidebar.tier2-bottom-sheet .sidebar-content {
+    display: none;
     padding: 10px 12px 12px;
     overflow-y: auto;
+}
+
+#sidebar.tier2-bottom-sheet.sheet-open .sidebar-content {
+    display: block;
 }
 
 #sidebar.tier2-bottom-sheet #sidebar-toggle {
     position: static;
     width: 100%;
+    min-height: 42px;
     writing-mode: horizontal-tb;
     border-radius: 0;
     padding: 9px 12px;
@@ -76,12 +83,7 @@
     min-width: 0;
 }
 
-#sidebar.tier2-bottom-sheet .list-shrine-name {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
+#sidebar.tier2-bottom-sheet .list-shrine-name,
 #sidebar.tier2-bottom-sheet .list-shrine-meta {
     overflow: hidden;
     white-space: nowrap;
@@ -101,11 +103,10 @@
     #sidebar.tier2-bottom-sheet {
         bottom: 8px;
         width: calc(100% - 16px);
-        max-height: 24%;
     }
 
-    #sidebar.tier2-bottom-sheet.expanded {
-        max-height: 68%;
+    #sidebar.tier2-bottom-sheet.sheet-open {
+        max-height: 58%;
     }
 
     #sidebar.tier2-bottom-sheet #jinja-list {

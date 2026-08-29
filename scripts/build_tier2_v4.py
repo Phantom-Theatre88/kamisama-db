@@ -14,7 +14,7 @@ MASTER = Path("data/jinja_master.csv")
 OUT = Path("data/jinja_tier2_generated.csv")
 REPORT = Path("data/tier2_build_report.json")
 HEADERS = ["id","name","yomi","former_shrine_rank","shikinaisha_type","ichinomiya_name","province","county","prefecture","city","address","lat","lng","gmap_url","main_god_ids","sub_god_ids","description","source_key","source_id","db_tier"]
-UA = {"User-Agent":"kamisama-db-research-builder/4.0 (+https://github.com/Phantom-Theatre88/kamisama-db)"}
+UA = {"User-Agent":"kamisama-db-research-builder/4.1 (+https://github.com/Phantom-Theatre88/kamisama-db)"}
 
 def fetch(url, retries=4):
     for i in range(retries):
@@ -96,14 +96,15 @@ def in_existing(name,lat,lng,base):
 def same(a,b): return norm(a["name"])==norm(b["name"]) and distance(float(a["lat"]),float(a["lng"]),float(b["lat"]),float(b["lng"]))<=.5
 
 def page_title(soup):
-    h=soup.find("h1")
-    if h:
-        t=clean(h.get_text(" ",strip=True))
-        if t and t not in ("資料詳細","資料情報"): return t
+    # JMApps detail pages may expose multiple H1s; prefer the record title from <title>.
     title=clean(soup.title.get_text(" ",strip=True)) if soup.title else ""
     title=re.sub(r"\s*[：:]\s*資料情報.*$","",title)
     title=re.sub(r"^\[ID:\d+\]\s*","",title)
-    return title
+    if title: return title
+    for h in soup.find_all(["h1","h2"]):
+        t=clean(h.get_text(" ",strip=True))
+        if t and t not in ("資料詳細","資料情報","國學院大學デジタル・ミュージアム"): return t
+    return ""
 
 def parse_modern(item):
     url,data_id=item
@@ -115,21 +116,34 @@ def parse_modern(item):
         return {"id":f"T2M{data_id}","name":name,"yomi":yomi,"former_shrine_rank":rank(note),"shikinaisha_type":"式内社" if "式内社" in note else "","ichinomiya_name":"","province":province,"county":"","prefecture":pref,"city":"","address":addr,"lat":f"{lat:.7f}","lng":f"{lng:.7f}","gmap_url":f"https://maps.google.com/?q={lat:.7f},{lng:.7f}","main_god_ids":"","sub_god_ids":"","description":"國學院大學「神道・神社史料集成（現代）」収録社。","source_key":"KOKUGAKUIN_MODERN","source_id":data_id,"db_tier":"2"}
     except Exception as e: print("modern fail",data_id,e); return None
 
+def normalized_field_key(k):
+    # Convert full-width numbers/parentheses used by JMApps labels: （１） -> (1)
+    return unicodedata.normalize("NFKC", clean(k)).lstrip("+")
+
+def indexed_field(f, idx, suffix=""):
+    target=f"現社名など({idx}){suffix}"
+    for k,v in f.items():
+        if normalized_field_key(k)==target:
+            return v
+    return ""
+
 def shiki_indices(f):
     idx=set()
     for k in f:
-        m=re.search(r"現社名など（(\d+)）(?:緯度経度|リンク)?$",k)
-        if m: idx.add(int(m[1]))
+        nk=normalized_field_key(k)
+        m=re.fullmatch(r"現社名など\((\d+)\)(?:緯度経度|リンク)?",nk)
+        if m: idx.add(int(m.group(1)))
     return sorted(idx)
 
 def parse_shiki(item):
     url,data_id=item
     try:
         f,soup=get_fields(fetch(url)); province=clean(f.get("国名") or f.get("旧国名")); county=clean(f.get("旧郡名")); st=clean(f.get("名神大社・大社・小社") or f.get("社格")) or "式内社"; default_name=page_title(soup); out=[]
-        for idx in shiki_indices(f):
-            raw=clean(f.get(f"+現社名など（{idx}）") or f.get(f"現社名など（{idx}）") or default_name)
+        indices=shiki_indices(f)
+        for idx in indices:
+            raw=clean(indexed_field(f,idx) or default_name)
             cand="論社" in raw; name=clean(re.sub(r"^[（(]\s*論社\s*[）)]\s*","",raw))
-            coord=' '.join([f.get(f"+現社名など（{idx}）緯度経度",''),f.get(f"現社名など（{idx}）緯度経度",''),f.get(f"+現社名など（{idx}）リンク",''),f.get(f"現社名など（{idx}）リンク",'')])
+            coord=' '.join([indexed_field(f,idx,"緯度経度"),indexed_field(f,idx,"リンク")])
             lat,lng=dms(coord)
             if not name or lat is None or lng is None: continue
             out.append({"id":f"T2S{data_id}_{idx}","name":name,"yomi":"","former_shrine_rank":"","shikinaisha_type":st,"ichinomiya_name":"","province":province,"county":county,"prefecture":"","city":"","address":"","lat":f"{lat:.7f}","lng":f"{lng:.7f}","gmap_url":f"https://maps.google.com/?q={lat:.7f},{lng:.7f}","main_god_ids":"","sub_god_ids":"","description":"延喜式内社データベースの現社候補"+("（論社）" if cand else ""),"source_key":"KOKUGAKUIN_SHIKINAI","source_id":f"{data_id}:{idx}","db_tier":"2"})

@@ -2,7 +2,7 @@
 // 検証版: 神社詳細ローカル編集
 // - 元CSVは変更しない
 // - localStorageの上書きを window.jinjaData に適用する
-// - 祭神は神さま検索UIで選択し、保存時のみID列へ戻す
+// - 祭神は正式名 / 読み / 別名 / 漢字違いで検索し、保存時のみID列へ戻す
 // ============================================================
 (() => {
     'use strict';
@@ -42,12 +42,19 @@
         return true;
     }
 
+    function aliasDataReady() {
+        return Array.isArray(window.kamisamaAliasData)
+            && window.kamisamaAliasesByCanonicalId instanceof Map;
+    }
+
     function waitForData() {
-        if (applyOverrides() && Array.isArray(window.kamisamaData) && window.kamisamaData.length) {
+        const shrineReady = applyOverrides();
+        const godReady = Array.isArray(window.kamisamaData) && window.kamisamaData.length > 0;
+        if (shrineReady && godReady && aliasDataReady()) {
             installEditor();
             return;
         }
-        window.setTimeout(waitForData, 250);
+        window.setTimeout(waitForData, 150);
     }
 
     function currentShrine() {
@@ -68,6 +75,13 @@
             .filter(Boolean);
     }
 
+    function normalize(value) {
+        return String(value || '')
+            .normalize('NFKC')
+            .toLowerCase()
+            .replace(/[\s・･]/g, '');
+    }
+
     function godById(id) {
         if (window.kamisamaMap instanceof Map) return window.kamisamaMap.get(id) || null;
         return Array.isArray(window.kamisamaData)
@@ -81,15 +95,27 @@
     }
 
     function godMatches(god, query) {
-        const q = String(query || '').trim().toLowerCase();
+        const q = normalize(query);
         if (!q) return true;
-        const core = [god.name, god.yomi, god.id, god.description]
-            .some(value => String(value || '').toLowerCase().includes(q));
+
+        const core = [god.name, god.yomi, god.id]
+            .some(value => normalize(value).includes(q));
         if (core) return true;
+
         return aliasesForGod(god.id).some(alias =>
             [alias.alias_name, alias.alias_yomi, alias.alias_type]
-                .some(value => String(value || '').toLowerCase().includes(q))
+                .some(value => normalize(value).includes(q))
         );
+    }
+
+    function matchedAliasLabel(god, query) {
+        const q = normalize(query);
+        if (!q) return '';
+        const hit = aliasesForGod(god.id).find(alias =>
+            [alias.alias_name, alias.alias_yomi]
+                .some(value => normalize(value).includes(q))
+        );
+        return hit?.alias_name || '';
     }
 
     function installEditor() {
@@ -158,7 +184,7 @@
                 <div class="god-picker-label">${label}</div>
                 <div class="god-picker-tags" data-role="tags"></div>
                 <div class="god-picker-search-wrap">
-                    <input type="search" data-role="search" placeholder="神さま名・読み・別名で検索" autocomplete="off">
+                    <input type="search" data-role="search" placeholder="正式名・読み・別名・漢字違いで検索" autocomplete="off">
                     <div class="god-picker-results" data-role="results" hidden></div>
                 </div>
             </div>`;
@@ -171,7 +197,6 @@
         if (!picker || !search || !results) return;
 
         picker._selectedIds = [];
-
         search.addEventListener('input', () => renderGodResults(picker));
         search.addEventListener('focus', () => renderGodResults(picker));
         search.addEventListener('keydown', event => {
@@ -231,16 +256,18 @@
         const query = search.value.trim();
         const matches = (Array.isArray(window.kamisamaData) ? window.kamisamaData : [])
             .filter(god => !selected.has(god.id) && godMatches(god, query))
-            .slice(0, query ? 20 : 12);
+            .slice(0, query ? 24 : 12);
 
         results.innerHTML = '';
         matches.forEach(god => {
+            const alias = matchedAliasLabel(god, query);
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'god-picker-result';
             button.innerHTML = `
                 <span class="god-picker-result-name">${god.name || god.id}</span>
-                <span class="god-picker-result-yomi">${god.yomi || ''}</span>`;
+                <span class="god-picker-result-yomi">${god.yomi || ''}</span>
+                ${alias && alias !== god.name ? `<span class="god-picker-result-alias">別表記: ${alias}</span>` : ''}`;
             button.addEventListener('click', () => {
                 picker._selectedIds = [...picker._selectedIds, god.id];
                 renderGodTags(picker);
@@ -254,7 +281,7 @@
         if (!matches.length) {
             const empty = document.createElement('div');
             empty.className = 'god-picker-no-result';
-            empty.textContent = query ? '候補がありません' : '追加できる神さまがありません';
+            empty.textContent = query ? '候補がありません。別表記追加は次段階で対応します。' : '追加できる神さまがありません';
             results.appendChild(empty);
         }
         results.hidden = false;

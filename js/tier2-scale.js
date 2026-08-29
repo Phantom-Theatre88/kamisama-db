@@ -6,6 +6,8 @@
     const BULK_MARKER_THRESHOLD = 700;
     const DEFAULT_VISIBLE_LIMIT = 80;
     const SEARCH_LIMIT = 300;
+    let drawerBound = false;
+    let mapBound = false;
 
     function validLatLng(jinja) {
         const lat = Number(jinja.lat);
@@ -23,7 +25,7 @@
         }
 
         if (!window.map) {
-            return { rows: filtered.slice(0, DEFAULT_VISIBLE_LIMIT), total: filtered.length, mode: 'map' };
+            return { rows: [], total: 0, mode: 'map' };
         }
 
         const bounds = window.map.getBounds();
@@ -41,8 +43,7 @@
         if (!sidebar || !toggle || !heading) return;
 
         sidebar.classList.add('tier2-bottom-sheet');
-        toggle.textContent = '⌃ 神社一覧';
-        toggle.setAttribute('aria-expanded', 'false');
+        sidebar.classList.remove('collapsed', 'expanded');
 
         if (!document.getElementById('tier2-list-count')) {
             const count = document.createElement('span');
@@ -51,12 +52,28 @@
             heading.appendChild(count);
         }
 
-        toggle.addEventListener('click', () => {
-            const expanded = sidebar.classList.toggle('expanded');
-            sidebar.classList.remove('collapsed');
-            toggle.textContent = expanded ? '⌄ 地図を広げる' : '⌃ 神社一覧';
-            toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        });
+        if (!drawerBound) {
+            drawerBound = true;
+            toggle.textContent = '⌃ 神社一覧';
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const open = sidebar.classList.toggle('sheet-open');
+                sidebar.classList.remove('collapsed', 'expanded');
+                toggle.textContent = open ? '⌄ 一覧を隠す' : '⌃ 神社一覧';
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (open) window.renderJinjaList();
+            }, true);
+        }
+    }
+
+    function bindMapListSync() {
+        if (mapBound || !window.map) return Boolean(window.map);
+        mapBound = true;
+        window.map.on('moveend zoomend', () => window.renderJinjaList());
+        window.renderJinjaList();
+        return true;
     }
 
     window.renderMarkers = function() {
@@ -68,7 +85,6 @@
         filteredJinja.forEach(jinja => {
             const pos = validLatLng(jinja);
             if (!pos) return;
-
             let marker;
             if (useLightMarkers) {
                 marker = L.circleMarker([pos.lat, pos.lng], {
@@ -85,7 +101,6 @@
                 const icon = L.divIcon({ className: 'custom-torii-marker', html: iconHtml, iconSize: [32, 32], iconAnchor: [16, 16] });
                 marker = L.marker([pos.lat, pos.lng], { icon, title: jinja.name || '' });
             }
-
             marker.on('click', () => window.selectJinja(jinja.id));
             window.markersLayer.addLayer(marker);
         });
@@ -133,15 +148,10 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         ensureBottomSheetUI();
-        const bindMap = () => {
-            if (!window.map) return false;
-            window.map.on('moveend zoomend', () => window.renderJinjaList());
-            return true;
-        };
-        if (!bindMap()) {
+        if (!bindMapListSync()) {
             const timer = setInterval(() => {
-                if (bindMap()) clearInterval(timer);
-            }, 250);
+                if (bindMapListSync()) clearInterval(timer);
+            }, 100);
             setTimeout(() => clearInterval(timer), 10000);
         }
     });

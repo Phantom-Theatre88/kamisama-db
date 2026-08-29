@@ -127,4 +127,12 @@
         script.dataset.godAliasEditPreview = '1';
         document.head.appendChild(script);
     }
+
+    if (!document.querySelector('script[data-god-alias-modal-bridge-preview]')) {
+        const script = document.createElement('script');
+        script.src = 'js/god-alias-modal-bridge.js?v=20260829_preview_01';
+        script.defer = true;
+        script.dataset.godAliasModalBridgePreview = '1';
+        document.head.appendChild(script);
+    }
 })();

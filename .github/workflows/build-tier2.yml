@@ -6,6 +6,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/build_tier2_v4.py'
+      - 'scripts/build_tier2_shard.py'
+      - 'scripts/merge_tier2_shards.py'
       - '.github/workflows/build-tier2.yml'
   schedule:
     - cron: '17 19 * * 0'
@@ -14,9 +16,74 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  shard:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: modern-01-05
+            source: modern
+            start: 1
+            end: 5
+          - name: modern-06-10
+            source: modern
+            start: 6
+            end: 10
+          - name: modern-11-15
+            source: modern
+            start: 11
+            end: 15
+          - name: shikinai-01-05
+            source: shikinai
+            start: 1
+            end: 5
+          - name: shikinai-06-10
+            source: shikinai
+            start: 6
+            end: 10
+          - name: shikinai-11-15
+            source: shikinai
+            start: 11
+            end: 15
+          - name: shikinai-16-20
+            source: shikinai
+            start: 16
+            end: 20
+          - name: shikinai-21-25
+            source: shikinai
+            start: 21
+            end: 25
+          - name: shikinai-26-29
+            source: shikinai
+            start: 26
+            end: 29
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+      - name: Build shard
+        run: >-
+          python scripts/build_tier2_shard.py
+          --source '${{ matrix.source }}'
+          --start-page '${{ matrix.start }}'
+          --end-page '${{ matrix.end }}'
+          --output 'tier2_shards/${{ matrix.name }}.csv'
+      - name: Upload shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: tier2-${{ matrix.name }}
+          path: tier2_shards/${{ matrix.name }}.csv
+          retention-days: 2
+
+  merge:
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,10 +91,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install dependencies
-        run: pip install requests beautifulsoup4
-      - name: Build Tier 2 dataset
-        run: python scripts/build_tier2_v4.py
+      - name: Download all shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tier2-*
+          path: tier2_shards
+          merge-multiple: true
+      - name: Merge and deduplicate
+        run: python scripts/merge_tier2_shards.py
       - name: Commit generated dataset to main
         run: |
           git config user.name 'github-actions[bot]'
@@ -36,7 +107,7 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No generated changes on main.'
           else
-            git commit -m 'Build Tier 2 shrine dataset'
+            git commit -m 'Build Tier 2 shrine dataset from shards'
             git fetch origin main
             git rebase origin/main
             git push origin HEAD:main
@@ -56,3 +127,12 @@ jobs:
             git commit -m 'Sync Tier 2 shrine dataset'
             git push origin HEAD:gh-pages
           fi
+      - name: Verify Tier 2 threshold
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('/tmp/tier2_build_report.json',encoding='utf-8'))
+          print(r)
+          if r['tier2_generated_rows'] < 2000:
+              raise SystemExit(f"Tier2 insufficient: {r['tier2_generated_rows']}")
+          PY

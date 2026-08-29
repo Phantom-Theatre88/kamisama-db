@@ -1,0 +1,13 @@
+{
+  "modern_declared": 1446,
+  "modern_links": 1446,
+  "shikinai_declared": 2844,
+  "shikinai_links": 2844,
+  "curated_master": 51,
+  "modern_generated": 1403,
+  "shikinai_current_shrine_rows": 3795,
+  "tier2_generated_rows": 5010,
+  "total_app_rows": 5061,
+  "status": "complete",
+  "dedupe": "normalized name + coordinate proximity"
+}

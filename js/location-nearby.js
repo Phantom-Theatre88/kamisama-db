@@ -1,6 +1,6 @@
 // ============================================================
 // 現在地・周辺神社
-// 現在地を地図に表示し、一覧は常に「現在の地図範囲」に従わせる。
+// 現在地を地図に表示し、一覧は統合コントローラに任せる。
 // ============================================================
 
 (() => {
@@ -35,15 +35,8 @@
 
     async function findCurrentLocation() {
         const button = document.getElementById('current-location-btn');
-
-        if (!window.isSecureContext) {
-            setStatus('現在地機能はHTTPS接続でのみ利用できます。', 'error');
-            return;
-        }
-        if (!navigator.geolocation) {
-            setStatus('このブラウザでは現在地を取得できません。', 'error');
-            return;
-        }
+        if (!window.isSecureContext) { setStatus('現在地機能はHTTPS接続でのみ利用できます。', 'error'); return; }
+        if (!navigator.geolocation) { setStatus('このブラウザでは現在地を取得できません。', 'error'); return; }
 
         const permissionState = await getGeolocationPermissionState();
         if (permissionState === 'denied') {
@@ -86,9 +79,7 @@
         try {
             const result = await navigator.permissions.query({ name: 'geolocation' });
             return result?.state || 'unknown';
-        } catch (_) {
-            return 'unknown';
-        }
+        } catch (_) { return 'unknown'; }
     }
 
     function applyPosition(position) {
@@ -100,7 +91,6 @@
 
     function showCurrentLocationOnMap() {
         if (!currentLocation || !window.map || typeof L === 'undefined') return;
-
         if (locationMarker) window.map.removeLayer(locationMarker);
         if (accuracyCircle) window.map.removeLayer(accuracyCircle);
 
@@ -128,7 +118,6 @@
             }).addTo(window.map);
         }
 
-        // moveend が tier2-scale.js の一覧再描画を呼ぶ。
         window.map.setView([currentLocation.lat, currentLocation.lng], 13);
     }
 
@@ -153,4 +142,12 @@
         status.textContent = message;
         status.dataset.type = type || '';
     }
+})();
+
+// 一覧・検索・マーカーの最終責務はこのコントローラに統一する。
+(() => {
+    const script = document.createElement('script');
+    script.src = 'js/shrine-map-controller.js?v=20260829_01';
+    script.defer = true;
+    document.head.appendChild(script);
 })();

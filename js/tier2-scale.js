@@ -89,12 +89,12 @@
         const refresh = () => window.requestAnimationFrame(() => window.renderJinjaList());
         window.map.on('moveend', refresh);
         window.map.on('zoomend', refresh);
-        refresh();
         return true;
     }
 
     window.renderMarkers = function() {
         if (!window.markersLayer || typeof window.filterData !== 'function') return;
+        bindMapListSync();
         window.markersLayer.clearLayers();
         const filteredJinja = window.filterData();
         const useLightMarkers = filteredJinja.length > BULK_MARKER_THRESHOLD;
@@ -127,6 +127,7 @@
         const listEl = document.getElementById('jinja-list');
         if (!listEl) return;
         ensureBottomSheetUI();
+        bindMapListSync();
 
         const { rows, total, mode } = currentListRows();
         listEl.innerHTML = '';
@@ -163,13 +164,5 @@
         if (count) count.textContent = mode === 'search' ? `検索 ${total.toLocaleString()}社` : `地図内 ${total.toLocaleString()}社`;
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        ensureBottomSheetUI();
-        if (!bindMapListSync()) {
-            const timer = setInterval(() => {
-                if (bindMapListSync()) clearInterval(timer);
-            }, 100);
-            setTimeout(() => clearInterval(timer), 10000);
-        }
-    });
+    document.addEventListener('DOMContentLoaded', ensureBottomSheetUI);
 })();

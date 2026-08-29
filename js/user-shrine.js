@@ -1,44 +1,34 @@
 // ============================================================
 // User Shrine Registration
-// 同じ神社データモデルに source_type=official/user を持たせる。
-// Kim追加分は IndexedDB goshuin-zukan / shrines に保存し、
-// window.jinjaData へマージして地図・検索・参拝ログで共通利用する。
+// 神社データは window.jinjaData に統一し、source_type=official/user で出所を区別する。
+// Kim追加分は端末内に保持し、起動時に同じ神社データへ復元する。
 // ============================================================
 (() => {
     'use strict';
 
-    const DB_NAME = 'goshuin-zukan';
-    const DB_VERSION = 2;
-    const SHRINE_STORE = 'shrines';
-    const VISIT_STORE = 'visitLogs';
-
-    let db = null;
+    const STORAGE_KEY = 'goshuin-zukan:user-shrines:v1';
     let addMode = false;
     let selectedLatLng = null;
     let draftMarker = null;
     let mapClickBound = false;
+    let initialized = false;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        waitUntilReady();
-    });
+    document.addEventListener('DOMContentLoaded', waitUntilReady);
+    if (document.readyState !== 'loading') waitUntilReady();
 
-    async function waitUntilReady() {
+    function waitUntilReady() {
+        if (initialized) return;
         if (!window.map || !Array.isArray(window.jinjaData) || !window.jinjaData.length) {
             window.setTimeout(waitUntilReady, 250);
             return;
         }
-
-        try {
-            tagOfficialShrines();
-            db = await openDatabase();
-            await mergeSavedShrines();
-            installAddButton();
-            installModal();
-            bindMapClick();
-            refreshMap();
-        } catch (error) {
-            console.error('[UserShrine] 初期化に失敗しました:', error);
-        }
+        initialized = true;
+        tagOfficialShrines();
+        mergeSavedShrines();
+        installAddButton();
+        installModal();
+        bindMapClick();
+        refreshMap();
     }
 
     function tagOfficialShrines() {
@@ -47,50 +37,27 @@
         });
     }
 
-    function openDatabase() {
-        return new Promise((resolve, reject) => {
-            if (!('indexedDB' in window)) {
-                reject(new Error('IndexedDB is not supported'));
-                return;
-            }
-
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onupgradeneeded = event => {
-                const upgradeDb = event.target.result;
-
-                if (!upgradeDb.objectStoreNames.contains(VISIT_STORE)) {
-                    const visitStore = upgradeDb.createObjectStore(VISIT_STORE, { keyPath: 'id' });
-                    visitStore.createIndex('visitDate', 'visitDate', { unique: false });
-                    visitStore.createIndex('createdAt', 'createdAt', { unique: false });
-                }
-
-                if (!upgradeDb.objectStoreNames.contains(SHRINE_STORE)) {
-                    const shrineStore = upgradeDb.createObjectStore(SHRINE_STORE, { keyPath: 'id' });
-                    shrineStore.createIndex('source_type', 'source_type', { unique: false });
-                    shrineStore.createIndex('created_at', 'created_at', { unique: false });
-                }
-            };
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error || new Error('IndexedDB open failed'));
-        });
+    function loadSavedShrines() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.warn('[UserShrine] 保存済み神社を読めませんでした:', error);
+            return [];
+        }
     }
 
-    function readAllShrines() {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(SHRINE_STORE, 'readonly');
-            const request = tx.objectStore(SHRINE_STORE).getAll();
-            request.onsuccess = () => resolve(request.result || []);
-            request.onerror = () => reject(request.error || new Error('shrines getAll failed'));
-        });
+    function saveAllUserShrines(rows) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
     }
 
-    async function mergeSavedShrines() {
-        const saved = await readAllShrines();
+    function mergeSavedShrines() {
+        const saved = loadSavedShrines();
         if (!saved.length) return;
-
         const byId = new Map(window.jinjaData.map(shrine => [shrine.id, shrine]));
         saved.forEach(shrine => {
-            shrine.source_type = shrine.source_type || 'user';
+            shrine.source_type = 'user';
             byId.set(shrine.id, shrine);
         });
         window.jinjaData = Array.from(byId.values());
@@ -106,10 +73,7 @@
         button.className = 'add-shrine-btn';
         button.textContent = '＋ 神社を追加';
         button.title = '地図上に神社を追加する';
-        button.addEventListener('click', () => {
-            if (addMode) cancelAddMode();
-            else startAddMode();
-        });
+        button.addEventListener('click', () => addMode ? cancelAddMode() : startAddMode());
         searchWrap.prepend(button);
     }
 
@@ -206,9 +170,9 @@
         if (!window.map || typeof L === 'undefined') return;
         const icon = L.divIcon({
             className: 'user-shrine-draft-wrap',
-            html: '<div class="user-shrine-draft-pin">＋</div>',
+            html: '<div class="user-shrine-draft-pin"><span>＋</span></div>',
             iconSize: [38, 38],
-            iconAnchor: [19, 19]
+            iconAnchor: [19, 34]
         });
         draftMarker = L.marker([latlng.lat, latlng.lng], { icon, zIndexOffset: 2000 }).addTo(window.map);
     }
@@ -221,8 +185,7 @@
     function openForm() {
         const modal = document.getElementById('user-shrine-modal');
         if (!modal || !selectedLatLng) return;
-        const form = document.getElementById('user-shrine-form');
-        form?.reset();
+        document.getElementById('user-shrine-form')?.reset();
         const position = document.getElementById('user-shrine-position');
         if (position) position.textContent = `PIN：${selectedLatLng.lat.toFixed(6)}, ${selectedLatLng.lng.toFixed(6)}`;
         const status = document.getElementById('user-shrine-status');
@@ -231,9 +194,9 @@
         window.setTimeout(() => document.getElementById('user-shrine-name')?.focus(), 0);
     }
 
-    async function saveShrine(event) {
+    function saveShrine(event) {
         event.preventDefault();
-        if (!db || !selectedLatLng) return;
+        if (!selectedLatLng) return;
 
         const name = String(document.getElementById('user-shrine-name')?.value || '').trim();
         if (!name) return;
@@ -270,16 +233,19 @@
         };
 
         try {
-            await putShrine(shrine);
+            const saved = loadSavedShrines();
+            saved.push(shrine);
+            saveAllUserShrines(saved);
             window.jinjaData.push(shrine);
+
             const modal = document.getElementById('user-shrine-modal');
             if (modal) modal.hidden = true;
             addMode = false;
             document.body.classList.remove('shrine-add-mode');
-            document.getElementById('add-shrine-btn').textContent = '＋ 神社を追加';
+            const button = document.getElementById('add-shrine-btn');
+            if (button) button.textContent = '＋ 神社を追加';
             clearDraftMarker();
             setMapHint('');
-            refreshMap();
 
             if (window.map) window.map.setView([lat, lng], Math.max(window.map.getZoom(), 15));
             window.setTimeout(() => {
@@ -291,15 +257,6 @@
             const status = document.getElementById('user-shrine-status');
             if (status) status.textContent = '保存できませんでした。もう一度お試しください。';
         }
-    }
-
-    function putShrine(shrine) {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(SHRINE_STORE, 'readwrite');
-            const request = tx.objectStore(SHRINE_STORE).put(shrine);
-            request.onsuccess = () => resolve(shrine);
-            request.onerror = () => reject(request.error || new Error('shrine put failed'));
-        });
     }
 
     function createUserShrineId() {

@@ -25,7 +25,6 @@
             const originalInstanceFlyTo = map.flyTo;
             const originalInstanceSetView = map.setView;
 
-            // 詳細表示中に走る固定 zoom=13 の移動を、その場だけ現在倍率へ置き換える。
             map.flyTo = function(latlng, zoom, options) {
                 const targetZoom = Number.isFinite(zoom)
                     ? Math.max(currentZoom, zoom)
@@ -74,16 +73,37 @@
     if (!document.querySelector('link[data-shrine-edit-preview]')) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'css/shrine-edit.css?v=20260829_preview_02';
+        link.href = 'css/shrine-edit.css?v=20260829_preview_03';
         link.dataset.shrineEditPreview = '1';
         document.head.appendChild(link);
     }
 
     if (!document.querySelector('script[data-shrine-edit-preview]')) {
         const script = document.createElement('script');
-        script.src = 'js/shrine-edit.js?v=20260829_preview_02';
+        script.src = 'js/shrine-edit.js?v=20260829_preview_03';
         script.defer = true;
         script.dataset.shrineEditPreview = '1';
+        document.head.appendChild(script);
+    }
+})();
+
+// 検証版のみ: 神社詳細から日付だけで参拝記録するUIを追加読み込みする。
+(() => {
+    'use strict';
+
+    if (!document.querySelector('link[data-quick-visit-preview]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/quick-visit.css?v=20260829_preview_01';
+        link.dataset.quickVisitPreview = '1';
+        document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-quick-visit-preview]')) {
+        const script = document.createElement('script');
+        script.src = 'js/quick-visit.js?v=20260829_preview_01';
+        script.defer = true;
+        script.dataset.quickVisitPreview = '1';
         document.head.appendChild(script);
     }
 })();

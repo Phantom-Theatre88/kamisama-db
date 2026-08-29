@@ -1,0 +1,113 @@
+/* 検証版: 神社別アルバム */
+.shrine-album {
+    margin: 12px 0;
+    padding: 10px;
+    border-top: 1px solid rgba(140,29,29,.18);
+    border-bottom: 1px solid rgba(140,29,29,.18);
+}
+
+.shrine-album-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.shrine-album-head h3 {
+    margin: 0;
+    color: #8c1d1d;
+    font-size: .9rem;
+}
+
+.shrine-album-head span {
+    font-size: .68rem;
+    color: #74684d;
+}
+
+.shrine-album-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+}
+
+.shrine-album-thumb {
+    position: relative;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    background: rgba(140,29,29,.08);
+    cursor: pointer;
+}
+
+.shrine-album-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.shrine-album-thumb span {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    padding: 2px 5px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.62);
+    color: #fff;
+    font-size: .62rem;
+}
+
+.shrine-album-empty {
+    grid-column: 1 / -1;
+    padding: 8px;
+    font-size: .72rem;
+    color: #74684d;
+    background: rgba(255,255,255,.38);
+    border-radius: 6px;
+}
+
+.shrine-album-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    padding: 28px;
+    background: rgba(0,0,0,.86);
+}
+
+.shrine-album-lightbox.open { display: flex; }
+
+.shrine-album-lightbox img {
+    max-width: min(92vw, 1100px);
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.shrine-album-lightbox button {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.shrine-album-lightbox-date {
+    color: #fff;
+    font-size: .8rem;
+}
+
+@media (max-width: 720px), (orientation: portrait) {
+    .shrine-album-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .shrine-album { padding: 9px 0; }
+}

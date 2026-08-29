@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/map-detail-compact.css?v=20260828_15">
     <link rel="stylesheet" href="css/location-nearby.css?v=20260828_15">
     <link rel="stylesheet" href="css/tier2-scale.css?v=20260829_05">
+    <link rel="stylesheet" href="css/user-shrine.css?v=20260829_01">
 </head>
 <body class="map-mode">
     <header class="main-header">
@@ -25,124 +26,23 @@
             <button class="nav-tab" data-view="god-view">📜 神さま図鑑</button>
             <button class="nav-tab" data-view="log-view">📖 参拝ログ</button>
         </nav>
-        <div class="header-search">
-            <input type="text" id="jinja-search" placeholder="🔍 神社名・神さま名・別名で検索...">
-        </div>
+        <div class="header-search"><input type="text" id="jinja-search" placeholder="🔍 神社名・神さま名・別名で検索..."></div>
     </header>
     <div id="map-view" class="view-section active">
         <main id="map"></main>
-        <div id="sidebar" class="washi-texture collapsable">
-            <button id="sidebar-toggle" class="jinja-btn">⛩ 絞り込み</button>
-            <div class="sidebar-content">
-                <div class="jinja-list-container">
-                    <h3>神社一覧</h3>
-                    <ul id="jinja-list"></ul>
-                </div>
-            </div>
-        </div>
-        <div id="detail-panel" class="washi-texture popup">
-            <button id="detail-close" class="close-btn">×</button>
-            <div id="detail-content"></div>
-        </div>
+        <div id="sidebar" class="washi-texture collapsable"><button id="sidebar-toggle" class="jinja-btn">⛩ 絞り込み</button><div class="sidebar-content"><div class="jinja-list-container"><h3>神社一覧</h3><ul id="jinja-list"></ul></div></div></div>
+        <div id="detail-panel" class="washi-texture popup"><button id="detail-close" class="close-btn">×</button><div id="detail-content"></div></div>
     </div>
     <div id="god-view" class="view-section washi-texture">
-        <div class="god-daicho-container">
-            <div class="god-left-panel">
-                <div class="god-category-tabs">
-                    <button class="god-cat-tab active" data-cat="all">すべて</button>
-                    <button class="god-cat-tab" data-cat="amatsukami">☀️ 天津神</button>
-                    <button class="god-cat-tab" data-cat="kunitsukami">🐉 国津神</button>
-                    <button class="god-cat-tab" data-cat="other">👤 その他</button>
-                </div>
-                <div class="god-list-scroll"><ul id="god-daicho-list"></ul></div>
-            </div>
-            <div class="god-right-panel">
-                <div class="god-detail-tabs">
-                    <button class="god-view-tab" data-tab="detail">📜 神様詳細</button>
-                    <button class="god-view-tab active" data-tab="tree">🌳 FamilyTree (系譜図)</button>
-                </div>
-                <div id="god-tab-detail-content" class="god-tab-content">
-                    <div id="god-profile-display"><p class="placeholder-text">左側のリストから神さまを選択してください。</p></div>
-                </div>
-                <div id="god-tab-tree-content" class="god-tab-content active"><div id="embedded-tree-container"></div></div>
-            </div>
-        </div>
+        <div class="god-daicho-container"><div class="god-left-panel"><div class="god-category-tabs"><button class="god-cat-tab active" data-cat="all">すべて</button><button class="god-cat-tab" data-cat="amatsukami">☀️ 天津神</button><button class="god-cat-tab" data-cat="kunitsukami">🐉 国津神</button><button class="god-cat-tab" data-cat="other">👤 その他</button></div><div class="god-list-scroll"><ul id="god-daicho-list"></ul></div></div><div class="god-right-panel"><div class="god-detail-tabs"><button class="god-view-tab" data-tab="detail">📜 神様詳細</button><button class="god-view-tab active" data-tab="tree">🌳 FamilyTree (系譜図)</button></div><div id="god-tab-detail-content" class="god-tab-content"><div id="god-profile-display"><p class="placeholder-text">左側のリストから神さまを選択してください。</p></div></div><div id="god-tab-tree-content" class="god-tab-content active"><div id="embedded-tree-container"></div></div></div></div>
     </div>
     <div id="log-view" class="view-section washi-texture">
-        <div class="log-layout">
-            <section class="visit-entry-panel">
-                <div class="log-title-row"><h2>📖 参拝録</h2></div>
-                <p class="view-desc">神社マップから神社を選び、参拝日を記録します。メモ・御朱印写真は任意です。</p>
-                <form id="visit-form">
-                    <div id="visit-shrine-card" class="visit-shrine-card" data-selected="false">
-                        <div class="log-field-label">参拝する神社<span class="log-required">必須</span></div>
-                        <strong id="visit-shrine-name">神社マップから神社を選択してください</strong>
-                        <span id="visit-shrine-meta">神社詳細の「この神社を参拝記録する」から開始します。</span>
-                        <button type="button" id="visit-change-shrine">神社マップで選ぶ</button>
-                        <input type="hidden" id="visit-shrine-id">
-                    </div>
-                    <div class="log-form-field">
-                        <label for="visit-date">参拝日<span class="log-required">必須</span></label>
-                        <input type="date" id="visit-date" required>
-                    </div>
-                    <div class="log-form-field">
-                        <label for="visit-memo">メモ</label>
-                        <textarea id="visit-memo" rows="5" placeholder="参拝した時のこと、御朱印のことなど"></textarea>
-                    </div>
-                    <div class="log-form-field">
-                        <span class="log-field-label">御朱印写真</span>
-                        <div class="photo-picker-box">
-                            <input type="file" id="goshuin-photo" accept="image/*">
-                            <div class="photo-preview-wrap">
-                                <img id="photo-preview" alt="選択した御朱印写真" hidden>
-                                <button type="button" id="photo-clear" hidden>写真を選び直す</button>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" id="visit-save" class="jinja-btn">この参拝記録を保存</button>
-                    <p id="log-save-status" aria-live="polite"></p>
-                </form>
-            </section>
-            <section class="visit-list-panel">
-                <div class="log-list-heading"><h3>保存した参拝記録</h3><span id="log-count">0件</span></div>
-                <div class="log-sort-controls" role="group" aria-label="参拝記録の表示順">
-                    <button type="button" class="log-sort-btn active" data-log-sort="date" aria-pressed="true">📅 日付順</button>
-                    <button type="button" class="log-sort-btn" data-log-sort="shrine" aria-pressed="false">⛩ 神社別</button>
-                    <button type="button" class="log-sort-btn" data-log-sort="god" aria-pressed="false">✨ 神さま別</button>
-                </div>
-                <div id="log-list-container"></div>
-            </section>
-        </div>
+        <div class="log-layout"><section class="visit-entry-panel"><div class="log-title-row"><h2>📖 参拝録</h2></div><p class="view-desc">神社マップから神社を選び、参拝日を記録します。メモ・御朱印写真は任意です。</p><form id="visit-form"><div id="visit-shrine-card" class="visit-shrine-card" data-selected="false"><div class="log-field-label">参拝する神社<span class="log-required">必須</span></div><strong id="visit-shrine-name">神社マップから神社を選択してください</strong><span id="visit-shrine-meta">神社詳細の「この神社を参拝記録する」から開始します。</span><button type="button" id="visit-change-shrine">神社マップで選ぶ</button><input type="hidden" id="visit-shrine-id"></div><div class="log-form-field"><label for="visit-date">参拝日<span class="log-required">必須</span></label><input type="date" id="visit-date" required></div><div class="log-form-field"><label for="visit-memo">メモ</label><textarea id="visit-memo" rows="5" placeholder="参拝した時のこと、御朱印のことなど"></textarea></div><div class="log-form-field"><span class="log-field-label">御朱印写真</span><div class="photo-picker-box"><input type="file" id="goshuin-photo" accept="image/*"><div class="photo-preview-wrap"><img id="photo-preview" alt="選択した御朱印写真" hidden><button type="button" id="photo-clear" hidden>写真を選び直す</button></div></div></div><button type="submit" id="visit-save" class="jinja-btn">この参拝記録を保存</button><p id="log-save-status" aria-live="polite"></p></form></section><section class="visit-list-panel"><div class="log-list-heading"><h3>保存した参拝記録</h3><span id="log-count">0件</span></div><div class="log-sort-controls" role="group" aria-label="参拝記録の表示順"><button type="button" class="log-sort-btn active" data-log-sort="date" aria-pressed="true">📅 日付順</button><button type="button" class="log-sort-btn" data-log-sort="shrine" aria-pressed="false">⛩ 神社別</button><button type="button" class="log-sort-btn" data-log-sort="god" aria-pressed="false">✨ 神さま別</button></div><div id="log-list-container"></div></section></div>
     </div>
-    <div id="log-detail-modal" class="log-detail-modal" hidden>
-        <div class="log-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="log-detail-shrine">
-            <button id="log-detail-close" class="close-btn" type="button" aria-label="閉じる">×</button>
-            <h2 id="log-detail-shrine"></h2>
-            <div id="log-detail-date"></div>
-            <img id="log-detail-image" alt="御朱印写真" hidden>
-            <div class="log-detail-memo-label">メモ</div>
-            <p id="log-detail-memo"></p>
-        </div>
-    </div>
-    <div id="tree-modal" class="modal washi-texture">
-        <div class="modal-content">
-            <button id="modal-close" class="close-btn">×</button>
-            <div id="tree-container"></div>
-        </div>
-    </div>
+    <div id="log-detail-modal" class="log-detail-modal" hidden><div class="log-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="log-detail-shrine"><button id="log-detail-close" class="close-btn" type="button" aria-label="閉じる">×</button><h2 id="log-detail-shrine"></h2><div id="log-detail-date"></div><img id="log-detail-image" alt="御朱印写真" hidden><div class="log-detail-memo-label">メモ</div><p id="log-detail-memo"></p></div></div>
+    <div id="tree-modal" class="modal washi-texture"><div class="modal-content"><button id="modal-close" class="close-btn">×</button><div id="tree-container"></div></div></div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="js/data-version.js?v=20260828_15"></script>
-    <script src="js/tier2-loader.js?v=20260829_01"></script>
-    <script src="js/tree.js?v=20260828_15"></script>
-    <script src="js/app.js?v=20260828_15"></script>
-    <script src="js/tier2-scale.js?v=20260829_05"></script>
-    <script src="js/alias-search.js?v=20260828_15"></script>
-    <script src="js/startup-map-guard.js?v=20260828_15"></script>
-    <script src="js/log-v4.js?v=20260828_15"></script>
-    <script src="js/log-card-ui.js?v=20260828_15"></script>
-    <script src="js/map-visit-status.js?v=20260828_15"></script>
-    <script src="js/map-detail-compact.js?v=20260828_15"></script>
-    <script src="js/location-nearby.js?v=20260829_06"></script>
+    <script src="js/data-version.js?v=20260828_15"></script><script src="js/tier2-loader.js?v=20260829_01"></script><script src="js/tree.js?v=20260828_15"></script><script src="js/app.js?v=20260828_15"></script><script src="js/tier2-scale.js?v=20260829_05"></script><script src="js/alias-search.js?v=20260828_15"></script><script src="js/startup-map-guard.js?v=20260828_15"></script><script src="js/log-v4.js?v=20260828_15"></script><script src="js/log-card-ui.js?v=20260828_15"></script><script src="js/map-visit-status.js?v=20260828_15"></script><script src="js/map-detail-compact.js?v=20260828_15"></script><script src="js/location-nearby.js?v=20260829_06"></script><script src="js/user-shrine.js?v=20260829_01"></script>
 </body>
 </html>

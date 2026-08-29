@@ -1,0 +1,37 @@
+/* ============================================================
+   Map Split Layout
+   横長: 地図60% / 情報40%
+   縦長: 地図55% / 情報45%
+   ============================================================ */
+#map-view { padding: 0; }
+.map-workspace { width:100%; height:100%; min-width:0; min-height:0; display:grid; grid-template-columns:minmax(0,3fr) minmax(320px,2fr); overflow:hidden; background:#f4efd3; }
+.map-pane { position:relative; min-width:0; min-height:0; overflow:hidden; }
+.map-pane #map { position:absolute; inset:0; width:100%; height:100%; }
+#map-info-pane { position:relative; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; border-left:2px solid #c2b180; background:#f4efd3; box-shadow:-3px 0 12px rgba(0,0,0,.10); z-index:700; }
+.map-info-tabs { flex:0 0 auto; display:grid; grid-template-columns:1fr 1fr; gap:0; border-bottom:1px solid #c2b180; background:#1a1a1a; }
+.map-info-tab { min-height:44px; border:0; border-right:1px solid rgba(212,175,55,.35); background:transparent; color:#d4af37; font-family:inherit; font-size:.86rem; font-weight:700; cursor:pointer; }
+.map-info-tab:last-child { border-right:0; }
+.map-info-tab.active { background:#d4af37; color:#1a1a1a; }
+#map-info-pane #sidebar,#map-info-pane #detail-panel { position:relative!important; inset:auto!important; top:auto!important; right:auto!important; bottom:auto!important; left:auto!important; transform:none!important; width:100%!important; max-width:none!important; max-height:none!important; height:100%; min-height:0; margin:0; border:0; border-radius:0; box-shadow:none; overflow:hidden; background-color:#f4efd3; }
+#map-info-pane #sidebar { display:flex; flex:1 1 auto; flex-direction:column; }
+#map-info-pane #sidebar.collapsed,#map-info-pane #sidebar.expanded,#map-info-pane #sidebar.tier2-bottom-sheet { transform:none!important; }
+#map-info-pane #sidebar-toggle { display:none!important; }
+#map-info-pane #sidebar .sidebar-content { display:block!important; flex:1 1 auto; min-height:0; padding:12px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+#map-info-pane #sidebar #jinja-list { display:grid; grid-template-columns:1fr; gap:6px; }
+#map-info-pane #sidebar #jinja-list li { margin:0; }
+#map-info-pane #detail-panel { display:none; flex:1 1 auto; padding:18px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+#map-info-pane #detail-panel.map-info-visible { display:block; }
+#map-info-pane #detail-panel .close-btn { position:sticky; top:0; float:right; margin:-6px -6px 6px 8px; }
+#map-info-pane[data-active-panel="detail"] #sidebar { display:none; }
+#map-info-pane[data-active-panel="detail"] #detail-panel { display:block; }
+#map-info-pane[data-active-panel="list"] #sidebar { display:flex; }
+#map-info-pane[data-active-panel="list"] #detail-panel { display:none; }
+@media (orientation: portrait) {
+    .map-workspace { grid-template-columns:1fr; grid-template-rows:minmax(0,55fr) minmax(260px,45fr); }
+    #map-info-pane { border-left:0; border-top:2px solid #c2b180; box-shadow:0 -3px 12px rgba(0,0,0,.10); }
+}
+@media (max-width:720px) and (orientation:portrait) {
+    .map-workspace { grid-template-rows:minmax(0,52fr) minmax(250px,48fr); }
+    .map-info-tab { min-height:40px; font-size:.8rem; }
+    #map-info-pane #sidebar .sidebar-content,#map-info-pane #detail-panel { padding:10px; }
+}

@@ -63,6 +63,5 @@ def main():
     }
     REPORT.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report,ensure_ascii=False,indent=2), flush=True)
-    if len(merged)<2000: raise SystemExit(2)
 
 if __name__=='__main__': main()

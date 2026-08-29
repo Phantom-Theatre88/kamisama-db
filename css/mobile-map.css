@@ -90,8 +90,15 @@
         flex: 1 1 auto;
     }
 
-    #map-view,
+    #map-view {
+        flex: 1 1 auto;
+        height: auto !important;
+        min-height: 0;
+    }
+
     #map {
+        width: 100%;
+        height: 100% !important;
         min-height: 0;
     }
 
@@ -197,7 +204,6 @@
         padding: 16px 14px max(16px, env(safe-area-inset-bottom));
     }
 
-    /* 一覧を開いている時、地図下部が完全に隠れないようにする */
     body.mobile-sheet-open #map {
         filter: none;
     }

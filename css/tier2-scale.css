@@ -11,10 +11,104 @@
     fill-opacity: 1 !important;
 }
 
+#sidebar.tier2-bottom-sheet {
+    top: auto;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    width: min(720px, calc(100% - 24px));
+    max-height: 28%;
+    border-radius: 14px 14px 10px 10px;
+    overflow: hidden;
+    transition: max-height .25s ease, box-shadow .25s ease;
+}
+
+#sidebar.tier2-bottom-sheet.collapsed {
+    transform: translateX(-50%);
+}
+
+#sidebar.tier2-bottom-sheet.expanded {
+    max-height: 72%;
+    box-shadow: 0 -8px 28px rgba(0,0,0,.24);
+}
+
+#sidebar.tier2-bottom-sheet .sidebar-content {
+    padding: 10px 12px 12px;
+    overflow-y: auto;
+}
+
+#sidebar.tier2-bottom-sheet #sidebar-toggle {
+    position: static;
+    width: 100%;
+    writing-mode: horizontal-tb;
+    border-radius: 0;
+    padding: 9px 12px;
+    font-size: .85rem;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+}
+
+#sidebar.tier2-bottom-sheet .jinja-list-container h3 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.tier2-list-count {
+    font-size: .72rem;
+    font-weight: 400;
+    color: #666;
+    white-space: nowrap;
+}
+
+#sidebar.tier2-bottom-sheet #jinja-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+
+#sidebar.tier2-bottom-sheet #jinja-list li {
+    margin: 0;
+    padding: 8px 10px;
+    min-width: 0;
+}
+
+#sidebar.tier2-bottom-sheet .list-shrine-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#sidebar.tier2-bottom-sheet .list-shrine-meta {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 #jinja-list .tier2-list-note {
+    grid-column: 1 / -1;
     padding: 10px 12px;
     font-size: 0.78rem;
     line-height: 1.45;
     opacity: 0.72;
     cursor: default;
+}
+
+@media (max-width: 720px) {
+    #sidebar.tier2-bottom-sheet {
+        bottom: 8px;
+        width: calc(100% - 16px);
+        max-height: 24%;
+    }
+
+    #sidebar.tier2-bottom-sheet.expanded {
+        max-height: 68%;
+    }
+
+    #sidebar.tier2-bottom-sheet #jinja-list {
+        grid-template-columns: 1fr;
+    }
 }

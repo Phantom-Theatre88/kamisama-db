@@ -1,6 +1,6 @@
 // ============================================================
 // 現在地・周辺神社
-// 現在地を地図に表示し、一覧は常に「現在の地図範囲」に従わせる。
+// 現在地を地図に表示し、一覧は統合コントローラに任せる。
 // ============================================================
 
 (() => {
@@ -142,4 +142,12 @@
         status.textContent = message;
         status.dataset.type = type || '';
     }
+})();
+
+// 一覧・検索・マーカーの最終責務はこのコントローラに統一する。
+(() => {
+    const script = document.createElement('script');
+    script.src = 'js/shrine-map-controller.js?v=20260829_01';
+    script.defer = true;
+    document.head.appendChild(script);
 })();

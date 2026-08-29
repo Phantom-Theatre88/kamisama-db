@@ -3,28 +3,204 @@
    スマホでは地図を主役にし、神社一覧を常時操作できるBottom Sheetにする。
    ============================================================ */
 @media (max-width: 720px) {
-    html, body { width:100%; height:100dvh; min-height:100dvh; overflow:hidden; }
-    body { display:flex; flex-direction:column; }
-    .main-header { position:relative; flex:0 0 auto; height:auto; min-height:0; padding:6px 8px 7px; display:grid; grid-template-columns:auto 1fr; grid-template-areas:"title nav" "search search"; gap:6px 8px; align-items:center; z-index:1800; }
-    .main-header h1 { grid-area:title; font-size:.88rem; white-space:nowrap; letter-spacing:0; }
-    .header-nav { grid-area:nav; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; min-width:0; }
-    .nav-tab { min-width:0; padding:6px 4px; font-size:.68rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .header-search { grid-area:search; display:grid; grid-template-columns:auto auto minmax(0,1fr); gap:5px; align-items:center; width:100%; min-width:0; }
-    .header-search input { width:100%; min-width:0; padding:7px 10px; font-size:.78rem; }
-    #current-location-btn,#add-shrine-btn { min-height:34px; padding:6px 8px; font-size:.68rem; white-space:nowrap; }
-    #nearby-status { display:none; }
-    .view-section { height:auto; min-height:0; flex:1 1 auto; }
-    #map-view { flex:1 1 auto; height:auto!important; min-height:0; }
-    #map { width:100%; height:100%!important; min-height:0; }
-    #sidebar.tier2-bottom-sheet { position:absolute; z-index:1600; left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); width:auto; max-height:52px; transform:none!important; border-radius:15px; overflow:hidden; box-shadow:0 4px 18px rgba(0,0,0,.24); background:rgba(244,239,211,.97); transition:max-height .24s ease,border-radius .24s ease,box-shadow .24s ease; touch-action:pan-y; }
-    #sidebar.tier2-bottom-sheet.sheet-open { max-height:min(62dvh,520px); border-radius:16px 16px 10px 10px; box-shadow:0 -8px 28px rgba(0,0,0,.28); }
-    #sidebar.tier2-bottom-sheet #sidebar-toggle { position:relative; top:auto; right:auto; left:auto; display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:52px; padding:14px 44px 10px; font-size:.84rem; font-weight:700; border-radius:0; touch-action:manipulation; }
-    #sidebar.tier2-bottom-sheet #sidebar-toggle::before { content:''; position:absolute; top:6px; left:50%; width:38px; height:4px; transform:translateX(-50%); border-radius:999px; background:rgba(255,255,255,.62); }
-    #sidebar.tier2-bottom-sheet .sidebar-content { max-height:calc(min(62dvh,520px) - 52px); padding:8px 10px max(14px,env(safe-area-inset-bottom)); overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
-    #sidebar.tier2-bottom-sheet .jinja-list-container h3 { position:sticky; top:0; z-index:2; margin:-8px -10px 8px; padding:10px 12px 8px; background:rgba(244,239,211,.98); font-size:.88rem; }
-    #sidebar.tier2-bottom-sheet #jinja-list { display:grid; grid-template-columns:1fr; gap:6px; }
-    #sidebar.tier2-bottom-sheet #jinja-list li { min-height:50px; padding:9px 10px; margin:0; touch-action:manipulation; }
-    #sidebar.tier2-bottom-sheet .list-shrine-name { font-size:.9rem; }
-    #sidebar.tier2-bottom-sheet .list-shrine-meta { margin-top:3px; font-size:.72rem; }
-    #detail-panel { z-index:1700; width:calc(100% - 16px); max-height:58dvh; padding:16px 14px max(16px,env(safe-area-inset-bottom)); }
+    html, body {
+        width: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .main-header {
+        position: relative;
+        flex: 0 0 auto;
+        height: auto;
+        min-height: 0;
+        padding: 6px 8px 7px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "title nav"
+            "search search";
+        gap: 6px 8px;
+        align-items: center;
+        z-index: 1800;
+    }
+
+    .main-header h1 {
+        grid-area: title;
+        font-size: .88rem;
+        white-space: nowrap;
+        letter-spacing: 0;
+    }
+
+    .header-nav {
+        grid-area: nav;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .nav-tab {
+        min-width: 0;
+        padding: 6px 4px;
+        font-size: .68rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .header-search {
+        grid-area: search;
+        display: grid;
+        grid-template-columns: auto auto minmax(0, 1fr);
+        gap: 5px;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .header-search input {
+        width: 100%;
+        min-width: 0;
+        padding: 7px 10px;
+        font-size: .78rem;
+    }
+
+    #current-location-btn,
+    #add-shrine-btn {
+        min-height: 34px;
+        padding: 6px 8px;
+        font-size: .68rem;
+        white-space: nowrap;
+    }
+
+    #nearby-status {
+        display: none;
+    }
+
+    .view-section {
+        min-height: 0;
+    }
+
+    #map-view {
+        position: relative;
+        flex: 1 1 0;
+        height: 0 !important;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    #map {
+        position: absolute;
+        inset: 0;
+        width: auto;
+        height: auto !important;
+        min-height: 0;
+    }
+
+    #sidebar.tier2-bottom-sheet {
+        position: absolute;
+        z-index: 1600;
+        left: 8px;
+        right: 8px;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        width: auto;
+        max-height: 52px;
+        transform: none !important;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 18px rgba(0,0,0,.24);
+        background: rgba(244,239,211,.97);
+        transition: max-height .24s ease, border-radius .24s ease, box-shadow .24s ease;
+        touch-action: pan-y;
+    }
+
+    #sidebar.tier2-bottom-sheet.sheet-open {
+        max-height: min(62dvh, 520px);
+        border-radius: 16px 16px 10px 10px;
+        box-shadow: 0 -8px 28px rgba(0,0,0,.28);
+    }
+
+    #sidebar.tier2-bottom-sheet #sidebar-toggle {
+        position: relative;
+        top: auto;
+        right: auto;
+        left: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 52px;
+        padding: 14px 44px 10px;
+        font-size: .84rem;
+        font-weight: 700;
+        border-radius: 0;
+        touch-action: manipulation;
+    }
+
+    #sidebar.tier2-bottom-sheet #sidebar-toggle::before {
+        content: '';
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        width: 38px;
+        height: 4px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background: rgba(255,255,255,.62);
+    }
+
+    #sidebar.tier2-bottom-sheet .sidebar-content {
+        max-height: calc(min(62dvh, 520px) - 52px);
+        padding: 8px 10px max(14px, env(safe-area-inset-bottom));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    #sidebar.tier2-bottom-sheet .jinja-list-container h3 {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        margin: -8px -10px 8px;
+        padding: 10px 12px 8px;
+        background: rgba(244,239,211,.98);
+        font-size: .88rem;
+    }
+
+    #sidebar.tier2-bottom-sheet #jinja-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    #sidebar.tier2-bottom-sheet #jinja-list li {
+        min-height: 50px;
+        padding: 9px 10px;
+        margin: 0;
+        touch-action: manipulation;
+    }
+
+    #sidebar.tier2-bottom-sheet .list-shrine-name {
+        font-size: .9rem;
+    }
+
+    #sidebar.tier2-bottom-sheet .list-shrine-meta {
+        margin-top: 3px;
+        font-size: .72rem;
+    }
+
+    #detail-panel {
+        z-index: 1700;
+        width: calc(100% - 16px);
+        max-height: 58dvh;
+        padding: 16px 14px max(16px, env(safe-area-inset-bottom));
+    }
 }

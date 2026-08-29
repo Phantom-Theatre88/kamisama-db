@@ -136,14 +136,14 @@
     if (!document.querySelector('link[data-god-alias-edit-preview]')) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'css/god-alias-edit.css?v=20260829_preview_01';
+        link.href = 'css/god-alias-edit.css?v=20260829_preview_02';
         link.dataset.godAliasEditPreview = '1';
         document.head.appendChild(link);
     }
 
     if (!document.querySelector('script[data-god-alias-edit-preview]')) {
         const script = document.createElement('script');
-        script.src = 'js/god-alias-edit.js?v=20260829_preview_01';
+        script.src = 'js/god-alias-edit.js?v=20260829_preview_02';
         script.defer = true;
         script.dataset.godAliasEditPreview = '1';
         document.head.appendChild(script);
@@ -151,7 +151,7 @@
 
     if (!document.querySelector('script[data-god-alias-modal-bridge-preview]')) {
         const script = document.createElement('script');
-        script.src = 'js/god-alias-modal-bridge.js?v=20260829_preview_01';
+        script.src = 'js/god-alias-modal-bridge.js?v=20260829_preview_02';
         script.defer = true;
         script.dataset.godAliasModalBridgePreview = '1';
         document.head.appendChild(script);

@@ -9,17 +9,24 @@
         return value.split(/[,|、\s]+/).map(id => id.trim()).filter(Boolean);
     }
 
+    // 五十音順は「読み」があるデータだけを読みで比較する。
+    // 読みが無い神社名を漢字や記号の文字コード順で代用しない。
     function shrineSortKey(jinja) {
-        return (jinja && (jinja.yomi || jinja.name)) || '';
+        return (jinja && jinja.yomi) || '';
+    }
+
+    function shrineNameKey(jinja) {
+        return (jinja && jinja.name) || '';
     }
 
     function mainGodSortKey(jinja) {
         const firstGodId = splitGodIds(jinja && jinja.main_god_ids)[0];
         if (!firstGodId || !window.kamisamaMap) return '';
         const god = window.kamisamaMap.get(firstGodId);
-        return (god && (god.yomi || god.name)) || '';
+        return (god && god.yomi) || '';
     }
 
+    // 空の読みは常に末尾へ送る。
     function compareKana(a, b) {
         const aEmpty = !a;
         const bEmpty = !b;
@@ -45,7 +52,8 @@
             const primary = compareKana(keyA, keyB);
             if (primary !== 0) return primary;
 
-            return compareKana(shrineSortKey(jinjaA), shrineSortKey(jinjaB));
+            // 同じ読み、または両方とも読み無しの場合だけ名称で安定化。
+            return collator.compare(shrineNameKey(jinjaA), shrineNameKey(jinjaB));
         });
 
         const fragment = document.createDocumentFragment();

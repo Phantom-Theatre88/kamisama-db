@@ -1,7 +1,8 @@
 // ============================================================
-// 検証版: 神社詳細から日付だけで参拝記録
+// 検証版: 神社詳細から参拝記録
 // - 既存 visitLogs IndexedDB をそのまま利用
-// - メモ/写真は後から参拝ログ画面で追加可能
+// - 日付だけでも保存可能
+// - 写真は複数選択可。旧UI互換のため先頭写真を photo にも保持
 // ============================================================
 (() => {
     'use strict';
@@ -52,16 +53,50 @@
         const box = document.createElement('div');
         box.className = 'quick-visit-box';
         box.innerHTML = `
-            <div class="quick-visit-title">📅 参拝日を記録</div>
+            <div class="quick-visit-title">📅 参拝記録</div>
             <div class="quick-visit-row">
                 <input class="quick-visit-date" type="date" value="${todayValue()}" aria-label="参拝日">
                 <button type="button" class="quick-visit-save">✓ 参拝しました</button>
             </div>
-            <div class="quick-visit-note">日付だけ先に保存できます。メモ・写真は参拝ログから後で追加できます。</div>
+            <label class="quick-visit-photo-label">
+                <span>📷 写真を追加（任意・複数可）</span>
+                <input class="quick-visit-photos" type="file" accept="image/*" multiple>
+            </label>
+            <div class="quick-visit-photo-preview" data-role="photo-preview"></div>
+            <div class="quick-visit-note">日付だけでも保存できます。写真は御朱印・鳥居・社殿・境内など複数枚まとめて登録できます。</div>
             <div class="quick-visit-status" aria-live="polite"></div>`;
 
         actionWrapper.parentNode?.insertBefore(box, actionWrapper);
+        const photoInput = box.querySelector('.quick-visit-photos');
+        photoInput?.addEventListener('change', () => renderPhotoPreview(box));
         box.querySelector('.quick-visit-save')?.addEventListener('click', () => saveQuickVisit(box, shrine));
+    }
+
+    function renderPhotoPreview(box) {
+        const input = box.querySelector('.quick-visit-photos');
+        const preview = box.querySelector('[data-role="photo-preview"]');
+        if (!input || !preview) return;
+        preview.innerHTML = '';
+
+        const files = Array.from(input.files || []).filter(file => file.type.startsWith('image/'));
+        files.slice(0, 8).forEach(file => {
+            const wrap = document.createElement('div');
+            wrap.className = 'quick-visit-photo-thumb';
+            const img = document.createElement('img');
+            const url = URL.createObjectURL(file);
+            img.src = url;
+            img.alt = file.name || '参拝写真';
+            img.onload = () => URL.revokeObjectURL(url);
+            wrap.appendChild(img);
+            preview.appendChild(wrap);
+        });
+
+        if (files.length > 8) {
+            const more = document.createElement('div');
+            more.className = 'quick-visit-photo-more';
+            more.textContent = `+${files.length - 8}`;
+            preview.appendChild(more);
+        }
     }
 
     function openDatabase() {
@@ -85,12 +120,13 @@
     }
 
     function createId() {
-        if (crypto?.randomUUID) return `V${crypto.randomUUID()}`;
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') return `V${window.crypto.randomUUID()}`;
         return `V${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
 
     async function saveQuickVisit(box, shrine) {
         const dateInput = box.querySelector('.quick-visit-date');
+        const photoInput = box.querySelector('.quick-visit-photos');
         const button = box.querySelector('.quick-visit-save');
         const status = box.querySelector('.quick-visit-status');
         const visitDate = dateInput?.value || '';
@@ -100,6 +136,14 @@
             return;
         }
 
+        const invalidFiles = Array.from(photoInput?.files || []).filter(file => !file.type.startsWith('image/'));
+        if (invalidFiles.length) {
+            if (status) status.textContent = '画像ファイルだけ選択してください。';
+            return;
+        }
+
+        const photos = Array.from(photoInput?.files || []);
+        const firstPhoto = photos[0] || null;
         const now = new Date().toISOString();
         const record = {
             id: createId(),
@@ -110,9 +154,10 @@
             shrineProvince: shrine.province || '',
             visitDate,
             memo: '',
-            photo: null,
-            photoName: '',
-            photoType: '',
+            photos,
+            photo: firstPhoto,
+            photoName: firstPhoto?.name || '',
+            photoType: firstPhoto?.type || '',
             createdAt: now,
             updatedAt: ''
         };
@@ -132,20 +177,21 @@
             });
             db.close();
 
-            if (status) status.textContent = `${formatDate(visitDate)} の参拝を保存しました ✓`;
+            if (status) {
+                status.textContent = photos.length
+                    ? `${formatDate(visitDate)} の参拝と写真${photos.length}枚を保存しました ✓`
+                    : `${formatDate(visitDate)} の参拝を保存しました ✓`;
+            }
             if (button) button.textContent = '✓ 記録済み';
+            if (photoInput) photoInput.value = '';
+            const preview = box.querySelector('[data-role="photo-preview"]');
+            if (preview) preview.innerHTML = '';
 
-            // 既存ログ画面を裏で再描画する。
             const activeSort = document.querySelector('.log-sort-btn.active[data-log-sort]')
                 || document.querySelector('.log-sort-btn[data-log-sort="date"]');
             activeSort?.click();
 
-            // 既存の詳細カード参拝回数表示を更新させる。
-            const panel = document.getElementById('detail-panel');
-            if (panel) {
-                panel.classList.add('quick-visit-updated');
-                window.setTimeout(() => panel.classList.remove('quick-visit-updated'), 30);
-            }
+            window.dispatchEvent(new CustomEvent('goshuin:visit-saved', { detail: { record } }));
         } catch (error) {
             console.error('[QuickVisit] save failed', error);
             if (status) status.textContent = '保存できませんでした。';
@@ -153,7 +199,10 @@
                 button.disabled = false;
                 button.textContent = '✓ 参拝しました';
             }
+            return;
         }
+
+        if (button) button.disabled = false;
     }
 
     function formatDate(value) {

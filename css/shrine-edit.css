@@ -1,0 +1,129 @@
+/* 検証版: 神社詳細ローカル編集 */
+#detail-panel .shrine-edit-launch {
+    position: absolute;
+    top: 14px;
+    right: 48px;
+    z-index: 20;
+    border: 1px solid #8c1d1d;
+    background: #fff9e8;
+    color: #8c1d1d;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: .8rem;
+    cursor: pointer;
+}
+
+.shrine-edit-sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 900;
+    display: none;
+    flex-direction: column;
+    background: rgba(244,239,211,.98);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px;
+}
+
+.shrine-edit-sheet.open { display: flex; }
+
+.shrine-edit-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.shrine-edit-head h3 {
+    margin: 0;
+    color: #8c1d1d;
+    font-size: 1.05rem;
+}
+
+.shrine-edit-close {
+    border: 0;
+    background: transparent;
+    color: #8c1d1d;
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+.shrine-edit-form {
+    display: grid;
+    gap: 10px;
+}
+
+.shrine-edit-form label {
+    display: grid;
+    gap: 4px;
+    font-size: .78rem;
+    color: #5d5238;
+}
+
+.shrine-edit-form input,
+.shrine-edit-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(140,29,29,.24);
+    border-radius: 7px;
+    background: rgba(255,255,255,.72);
+    color: #2f2a1e;
+    padding: 8px 9px;
+    font: inherit;
+    font-size: .86rem;
+}
+
+.shrine-edit-form textarea {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.shrine-edit-note {
+    margin: 0 0 4px;
+    font-size: .72rem;
+    line-height: 1.5;
+    color: #74684d;
+}
+
+.shrine-edit-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.shrine-edit-actions button {
+    border: 0;
+    border-radius: 7px;
+    padding: 10px 8px;
+    font: inherit;
+    cursor: pointer;
+}
+
+.shrine-edit-save {
+    background: #a51f1f;
+    color: #fff;
+}
+
+.shrine-edit-cancel {
+    background: rgba(255,255,255,.72);
+    color: #5d5238;
+    border: 1px solid rgba(93,82,56,.25) !important;
+}
+
+.shrine-edit-status {
+    min-height: 1.2em;
+    margin: 0;
+    font-size: .75rem;
+    color: #8c1d1d;
+}
+
+@media (orientation: portrait) {
+    #detail-panel .shrine-edit-launch {
+        top: 10px;
+        right: 44px;
+    }
+    .shrine-edit-sheet { padding: 14px; }
+}

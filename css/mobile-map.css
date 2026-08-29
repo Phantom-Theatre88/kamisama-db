@@ -121,6 +121,9 @@
 
     #sidebar.tier2-bottom-sheet #sidebar-toggle {
         position: relative;
+        top: auto;
+        right: auto;
+        left: auto;
         display: flex;
         align-items: center;
         justify-content: center;

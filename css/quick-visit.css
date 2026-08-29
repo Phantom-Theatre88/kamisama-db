@@ -1,0 +1,76 @@
+/* 検証版: 神社詳細から日付だけで参拝記録 */
+.quick-visit-box {
+    margin: 12px 0;
+    padding: 10px;
+    border: 1px solid rgba(140,29,29,.22);
+    border-radius: 8px;
+    background: rgba(255,255,255,.42);
+}
+
+.quick-visit-title {
+    margin-bottom: 7px;
+    color: #8c1d1d;
+    font-weight: 700;
+    font-size: .86rem;
+}
+
+.quick-visit-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.quick-visit-date {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(140,29,29,.25);
+    border-radius: 7px;
+    background: rgba(255,255,255,.78);
+    padding: 9px 10px;
+    font: inherit;
+    color: #2f2a1e;
+}
+
+.quick-visit-save {
+    border: 0;
+    border-radius: 7px;
+    background: #a51f1f;
+    color: #fff;
+    padding: 10px 14px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.quick-visit-save:disabled { opacity: .7; }
+
+.quick-visit-note,
+.quick-visit-status {
+    margin-top: 6px;
+    font-size: .7rem;
+    line-height: 1.45;
+    color: #74684d;
+}
+
+.quick-visit-status {
+    min-height: 1em;
+    color: #8c1d1d;
+}
+
+.god-picker-result-alias {
+    display: block;
+    width: 100%;
+    margin-top: 2px;
+    font-size: .68rem;
+    color: #8c1d1d;
+}
+
+@media (max-width: 720px), (orientation: portrait) {
+    .quick-visit-row {
+        grid-template-columns: 1fr;
+    }
+    .quick-visit-save { width: 100%; }
+}

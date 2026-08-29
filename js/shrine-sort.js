@@ -1,4 +1,5 @@
 // 神社一覧ソート: 神社名順 / 主祭神順
+// 既存の一覧描画は一切変更せず、描画済みDOMの順序だけを並べ替える。
 (() => {
     const collator = new Intl.Collator('ja', { usage: 'sort', sensitivity: 'base', numeric: true });
     let currentJinjaSort = 'shrine';
@@ -28,45 +29,40 @@
         return collator.compare(a, b);
     }
 
-    function sortJinjaData(items) {
-        return [...items].sort((a, b) => {
-            const primaryA = currentJinjaSort === 'god' ? mainGodSortKey(a) : shrineSortKey(a);
-            const primaryB = currentJinjaSort === 'god' ? mainGodSortKey(b) : shrineSortKey(b);
-            const primary = compareKana(primaryA, primaryB);
+    function sortExistingJinjaList() {
+        const listEl = document.getElementById('jinja-list');
+        if (!listEl || !Array.isArray(window.jinjaData)) return;
+
+        const dataById = new Map(window.jinjaData.map(jinja => [jinja.id, jinja]));
+        const items = Array.from(listEl.children);
+
+        items.sort((a, b) => {
+            const jinjaA = dataById.get(a.dataset.jinjaId);
+            const jinjaB = dataById.get(b.dataset.jinjaId);
+
+            const keyA = currentJinjaSort === 'god' ? mainGodSortKey(jinjaA) : shrineSortKey(jinjaA);
+            const keyB = currentJinjaSort === 'god' ? mainGodSortKey(jinjaB) : shrineSortKey(jinjaB);
+            const primary = compareKana(keyA, keyB);
             if (primary !== 0) return primary;
-            return compareKana(shrineSortKey(a), shrineSortKey(b));
+
+            return compareKana(shrineSortKey(jinjaA), shrineSortKey(jinjaB));
         });
+
+        const fragment = document.createDocumentFragment();
+        items.forEach(item => fragment.appendChild(item));
+        listEl.appendChild(fragment);
     }
 
-    // app.js の一覧描画を、表示順だけ追加した版に差し替える。
-    window.renderJinjaList = function renderJinjaList() {
-        const listEl = document.getElementById('jinja-list');
-        if (!listEl) return;
-        listEl.innerHTML = '';
-
-        const source = typeof window.filterData === 'function'
-            ? window.filterData()
-            : (Array.isArray(window.jinjaData) ? window.jinjaData : []);
-        const sortedJinja = sortJinjaData(source);
-
-        sortedJinja.forEach(jinja => {
-            const li = document.createElement('li');
-            li.dataset.jinjaId = jinja.id;
-
-            const firstGodId = splitGodIds(jinja.main_god_ids)[0];
-            const god = firstGodId && window.kamisamaMap ? window.kamisamaMap.get(firstGodId) : null;
-            const godName = god ? god.name : '';
-
-            li.innerHTML = `
-                <div class="list-shrine-name">${jinja.name || ''}</div>
-                <div class="list-shrine-meta">${jinja.yomi || ''} / ${jinja.province || ''}國${currentJinjaSort === 'god' && godName ? ` / 主祭神: ${godName}` : ''}</div>
-            `;
-            li.addEventListener('click', () => {
-                if (typeof window.selectJinja === 'function') window.selectJinja(jinja.id);
-            });
-            listEl.appendChild(li);
-        });
-    };
+    // 既存の renderJinjaList を包むだけ。
+    // 神社名・住所・読み・カードUIなど、元のHTML生成には一切触れない。
+    const originalRenderJinjaList = window.renderJinjaList;
+    if (typeof originalRenderJinjaList === 'function') {
+        window.renderJinjaList = function(...args) {
+            const result = originalRenderJinjaList.apply(this, args);
+            sortExistingJinjaList();
+            return result;
+        };
+    }
 
     function injectSortControls() {
         const container = document.querySelector('.jinja-list-container');
@@ -94,12 +90,17 @@
         controls.addEventListener('click', event => {
             const button = event.target.closest('[data-jinja-sort]');
             if (!button) return;
+
             currentJinjaSort = button.dataset.jinjaSort;
             controls.querySelectorAll('[data-jinja-sort]').forEach(btn => {
                 btn.classList.toggle('active', btn === button);
             });
-            window.renderJinjaList();
+
+            sortExistingJinjaList();
         });
+
+        // 初期表示も神社名順に整える。
+        sortExistingJinjaList();
     }
 
     document.addEventListener('DOMContentLoaded', injectSortControls);

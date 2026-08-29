@@ -1,4 +1,4 @@
-/* 検証版: 神社詳細から日付だけで参拝記録 */
+/* 検証版: 神社詳細から参拝記録 */
 .quick-visit-box {
     margin: 12px 0;
     padding: 10px;
@@ -47,6 +47,53 @@
 
 .quick-visit-save:disabled { opacity: .7; }
 
+.quick-visit-photo-label {
+    display: grid;
+    gap: 5px;
+    margin-top: 9px;
+    font-size: .75rem;
+    color: #5d5238;
+}
+
+.quick-visit-photo-label input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px dashed rgba(140,29,29,.28);
+    border-radius: 7px;
+    background: rgba(255,255,255,.64);
+    padding: 7px;
+    font: inherit;
+}
+
+.quick-visit-photo-preview {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 7px;
+}
+
+.quick-visit-photo-thumb,
+.quick-visit-photo-more {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 6px;
+    background: rgba(140,29,29,.08);
+}
+
+.quick-visit-photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.quick-visit-photo-more {
+    display: grid;
+    place-items: center;
+    color: #8c1d1d;
+    font-weight: 700;
+}
+
 .quick-visit-note,
 .quick-visit-status {
     margin-top: 6px;
@@ -73,4 +120,5 @@
         grid-template-columns: 1fr;
     }
     .quick-visit-save { width: 100%; }
+    .quick-visit-photo-preview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

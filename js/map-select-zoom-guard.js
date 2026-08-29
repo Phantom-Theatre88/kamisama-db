@@ -2,31 +2,22 @@
 (() => {
     'use strict';
 
-    const install = () => {
-        if (typeof window.showDetailPanel !== 'function' || !window.map) return false;
+    if (!window.L || !L.Map || !L.Map.prototype || typeof L.Map.prototype.flyTo !== 'function') return;
 
-        const originalShowDetailPanel = window.showDetailPanel;
-        window.showDetailPanel = function(jinja) {
-            const currentZoom = window.map && typeof window.map.getZoom === 'function'
-                ? window.map.getZoom()
-                : 13;
+    const originalFlyTo = L.Map.prototype.flyTo;
 
-            originalShowDetailPanel(jinja);
+    L.Map.prototype.flyTo = function(latlng, zoom, options) {
+        let targetZoom = zoom;
 
-            if (window.map && jinja) {
-                const lat = parseFloat(jinja.lat);
-                const lng = parseFloat(jinja.lng);
-                if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
-                    const targetZoom = Math.max(currentZoom, 13);
-                    window.map.stop();
-                    window.map.setView([lat, lng], targetZoom, { animate: false });
-                }
+        // 既存の神社選択処理は zoom=13 を指定している。
+        // 現在のズームが13より近い場合は、その倍率を維持してZoomOutさせない。
+        if (zoom === 13 && typeof this.getZoom === 'function') {
+            const currentZoom = this.getZoom();
+            if (Number.isFinite(currentZoom) && currentZoom > 13) {
+                targetZoom = currentZoom;
             }
-        };
-        return true;
-    };
+        }
 
-    if (!install()) {
-        window.addEventListener('load', install, { once: true });
-    }
+        return originalFlyTo.call(this, latlng, targetZoom, options);
+    };
 })();

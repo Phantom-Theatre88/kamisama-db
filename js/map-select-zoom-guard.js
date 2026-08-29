@@ -74,14 +74,14 @@
     if (!document.querySelector('link[data-shrine-edit-preview]')) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'css/shrine-edit.css?v=20260829_preview_01';
+        link.href = 'css/shrine-edit.css?v=20260829_preview_02';
         link.dataset.shrineEditPreview = '1';
         document.head.appendChild(link);
     }
 
     if (!document.querySelector('script[data-shrine-edit-preview]')) {
         const script = document.createElement('script');
-        script.src = 'js/shrine-edit.js?v=20260829_preview_01';
+        script.src = 'js/shrine-edit.js?v=20260829_preview_02';
         script.defer = true;
         script.dataset.shrineEditPreview = '1';
         document.head.appendChild(script);

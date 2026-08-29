@@ -55,7 +55,8 @@
     gap: 10px;
 }
 
-.shrine-edit-form label {
+.shrine-edit-form label,
+.god-picker {
     display: grid;
     gap: 4px;
     font-size: .78rem;
@@ -63,7 +64,8 @@
 }
 
 .shrine-edit-form input,
-.shrine-edit-form textarea {
+.shrine-edit-form textarea,
+.god-picker-search-wrap input {
     width: 100%;
     box-sizing: border-box;
     border: 1px solid rgba(140,29,29,.24);
@@ -85,6 +87,99 @@
     font-size: .72rem;
     line-height: 1.5;
     color: #74684d;
+}
+
+.god-picker-label {
+    font-size: .78rem;
+    color: #5d5238;
+}
+
+.god-picker-tags {
+    min-height: 34px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    padding: 6px;
+    border: 1px solid rgba(140,29,29,.14);
+    border-radius: 7px;
+    background: rgba(255,255,255,.42);
+}
+
+.god-picker-empty {
+    color: #8d836c;
+    font-size: .78rem;
+}
+
+.god-picker-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(140,29,29,.28);
+    border-radius: 999px;
+    background: #fff8df;
+    color: #6e1717;
+    padding: 5px 8px 5px 10px;
+    font: inherit;
+    font-size: .78rem;
+    cursor: pointer;
+}
+
+.god-picker-tag-remove {
+    font-size: .95em;
+    opacity: .75;
+}
+
+.god-picker-search-wrap {
+    position: relative;
+}
+
+.god-picker-results {
+    margin-top: 4px;
+    max-height: 190px;
+    overflow-y: auto;
+    border: 1px solid rgba(140,29,29,.2);
+    border-radius: 7px;
+    background: #fffdf4;
+    box-shadow: 0 8px 20px rgba(55,40,20,.14);
+}
+
+.god-picker-result {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 8px;
+    align-items: center;
+    border: 0;
+    border-bottom: 1px solid rgba(140,29,29,.08);
+    background: transparent;
+    color: #2f2a1e;
+    padding: 9px 10px;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.god-picker-result:last-child { border-bottom: 0; }
+.god-picker-result:hover,
+.god-picker-result:focus { background: #f7efd2; outline: none; }
+
+.god-picker-result-name {
+    font-size: .84rem;
+    font-weight: 700;
+    color: #6e1717;
+}
+
+.god-picker-result-yomi {
+    font-size: .72rem;
+    color: #7b725f;
+    white-space: nowrap;
+}
+
+.god-picker-no-result {
+    padding: 10px;
+    color: #8d836c;
+    font-size: .76rem;
 }
 
 .shrine-edit-actions {
@@ -126,4 +221,5 @@
         right: 44px;
     }
     .shrine-edit-sheet { padding: 14px; }
+    .god-picker-results { max-height: 150px; }
 }

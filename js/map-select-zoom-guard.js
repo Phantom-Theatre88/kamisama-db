@@ -87,23 +87,44 @@
     }
 })();
 
-// 検証版のみ: 神社詳細から日付だけで参拝記録するUIを追加読み込みする。
+// 検証版のみ: 神社詳細から参拝記録するUIを追加読み込みする。
 (() => {
     'use strict';
 
     if (!document.querySelector('link[data-quick-visit-preview]')) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'css/quick-visit.css?v=20260829_preview_01';
+        link.href = 'css/quick-visit.css?v=20260829_preview_02';
         link.dataset.quickVisitPreview = '1';
         document.head.appendChild(link);
     }
 
     if (!document.querySelector('script[data-quick-visit-preview]')) {
         const script = document.createElement('script');
-        script.src = 'js/quick-visit.js?v=20260829_preview_01';
+        script.src = 'js/quick-visit.js?v=20260829_preview_02';
         script.defer = true;
         script.dataset.quickVisitPreview = '1';
+        document.head.appendChild(script);
+    }
+})();
+
+// 検証版のみ: 神社別アルバムを追加読み込みする。
+(() => {
+    'use strict';
+
+    if (!document.querySelector('link[data-shrine-album-preview]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/shrine-album.css?v=20260829_preview_01';
+        link.dataset.shrineAlbumPreview = '1';
+        document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-shrine-album-preview]')) {
+        const script = document.createElement('script');
+        script.src = 'js/shrine-album.js?v=20260829_preview_01';
+        script.defer = true;
+        script.dataset.shrineAlbumPreview = '1';
         document.head.appendChild(script);
     }
 })();

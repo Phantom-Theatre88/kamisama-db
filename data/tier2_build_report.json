@@ -1,13 +1,22 @@
 {
-  "modern_declared": 1446,
-  "modern_links": 1446,
-  "shikinai_declared": 2844,
-  "shikinai_links": 2844,
-  "curated_master": 51,
-  "modern_generated": 1403,
-  "shikinai_current_shrine_rows": 3795,
+  "shard_files": 9,
+  "shard_rows_before_dedupe": 5237,
+  "modern_rows_after_dedupe": 1401,
+  "shikinai_rows_after_dedupe": 3609,
   "tier2_generated_rows": 5010,
+  "curated_master": 51,
   "total_app_rows": 5061,
   "status": "complete",
+  "shards": {
+    "modern-01-05.csv": 500,
+    "modern-06-10.csv": 498,
+    "modern-11-15.csv": 444,
+    "shikinai-01-05.csv": 558,
+    "shikinai-06-10.csv": 702,
+    "shikinai-11-15.csv": 756,
+    "shikinai-16-20.csv": 792,
+    "shikinai-21-25.csv": 493,
+    "shikinai-26-29.csv": 494
+  },
   "dedupe": "normalized name + coordinate proximity"
 }
